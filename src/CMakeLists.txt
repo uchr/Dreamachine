@@ -1,5 +1,9 @@
 find_package(Qt5Widgets REQUIRED)
-find_package(Magnum REQUIRED GL Shaders)
+find_package(Corrade REQUIRED Main)
+find_package(Magnum REQUIRED GL
+                             MeshTools
+                             Primitives
+                             Shaders)
 
 if(MAGNUM_TARGET_GLES AND NOT MAGNUM_TARGET_DESKTOP_GLES)
     find_package(Magnum REQUIRED EglContext)
@@ -17,10 +21,13 @@ set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
 add_executable(Dreamachine DreamachineApp.cpp)
 target_link_libraries(Dreamachine PRIVATE
+    Corrade::Main
     Magnum::GLContext
     Magnum::GL
     Magnum::Magnum
     Magnum::Shaders
+    Magnum::MeshTools
+    Magnum::Primitives
     Qt5::Widgets)
 
 # Make the executable a default target to build & run in Visual Studio
