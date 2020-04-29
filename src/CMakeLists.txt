@@ -1,9 +1,10 @@
 find_package(Qt5Widgets REQUIRED)
 find_package(Corrade REQUIRED Main)
-find_package(Magnum REQUIRED GL
-                             MeshTools
-                             Primitives
-                             Shaders)
+find_package(Magnum REQUIRED
+    GL
+    MeshTools
+    Primitives
+    Shaders)
 
 if(MAGNUM_TARGET_GLES AND NOT MAGNUM_TARGET_DESKTOP_GLES)
     find_package(Magnum REQUIRED EglContext)
@@ -19,7 +20,11 @@ endif()
 
 set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
-add_executable(Dreamachine DreamachineApp.cpp)
+add_executable(Dreamachine
+    main.cpp
+    MainWindow.cpp
+    GLView.cpp)
+
 target_link_libraries(Dreamachine PRIVATE
     Corrade::Main
     Magnum::GLContext
