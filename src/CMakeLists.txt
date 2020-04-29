@@ -1,5 +1,5 @@
 find_package(Qt5Widgets REQUIRED)
-find_package(Magnum REQUIRED GL)
+find_package(Magnum REQUIRED GL Shaders)
 
 if(MAGNUM_TARGET_GLES AND NOT MAGNUM_TARGET_DESKTOP_GLES)
     find_package(Magnum REQUIRED EglContext)
@@ -15,12 +15,13 @@ endif()
 
 set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
-add_executable(MyApplication DreamachineApp.cpp)
-target_link_libraries(MyApplication PRIVATE
+add_executable(Dreamachine DreamachineApp.cpp)
+target_link_libraries(Dreamachine PRIVATE
     Magnum::GLContext
     Magnum::GL
     Magnum::Magnum
+    Magnum::Shaders
     Qt5::Widgets)
 
 # Make the executable a default target to build & run in Visual Studio
-set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT DreamachineApp)
+set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Dreamachine)
