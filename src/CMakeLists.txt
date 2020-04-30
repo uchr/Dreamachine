@@ -23,7 +23,8 @@ set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 add_executable(Dreamachine
     main.cpp
     MainWindow.cpp
-    GLView.cpp)
+    GLView.cpp
+    PAKParser.cpp)
 
 target_link_libraries(Dreamachine PRIVATE
     Corrade::Main
