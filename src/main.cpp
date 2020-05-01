@@ -1,13 +1,15 @@
 #include "MainWindow.h"
 #include "PAKParser.h"
+#include "CDRParser.h"
 
 #include <QSurfaceFormat>
 #include <QtWidgets/QApplication>
 
 int main(int argc, char** argv) {
     PAKParser pakParser("package/the_gym.pak");
-
     pakParser.extractCDR();
+    CDRParser cdrParser("extracted/the_gym.cdr");
+    cdrParser.parseScene();
 
     return 0;
 

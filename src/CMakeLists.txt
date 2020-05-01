@@ -24,6 +24,8 @@ add_executable(Dreamachine
     main.cpp
     MainWindow.cpp
     GLView.cpp
+    BinReader.cpp
+    CDRParser.cpp
     PAKParser.cpp)
 
 target_link_libraries(Dreamachine PRIVATE
