@@ -107,6 +107,26 @@ void PAKParser::extractCDR() const {
     }
 }
 
+void PAKParser::extractBUN() const
+{
+    std::string filename = m_path.filename().string();
+    filename = std::string(filename.begin(), filename.begin() + (filename.size() - 4));
+    const std::string innerPath = "bundles\\" + filename + ".bun";
+
+    std::cout << "Try to extract '" << filename << "' by '" << innerPath << "'" << std::endl;
+    
+    const FileEntry* entry = findFile(innerPath);
+    if (entry != nullptr) {
+        const std::filesystem::path extractedPath = std::filesystem::path("extracted") / (filename + ".bun");
+        extract(*entry, extractedPath);
+        std::cout << "Extracted successfully to '" << extractedPath.string() << "'" << std::endl;
+    }
+    else
+    {
+        std::cerr << "File not found" << std::endl;
+    }
+}
+
 void PAKParser::extract(const FileEntry& entry, const std::filesystem::path& outputPath) const {
     std::filesystem::create_directories(outputPath.parent_path());
 

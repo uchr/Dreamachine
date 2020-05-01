@@ -12,6 +12,7 @@ public:
     ~PAKParser();
 
     void extractCDR() const;
+    void extractBUN() const;
 
 private:
     void extract(const FileEntry& entry, const std::filesystem::path& outputPath) const;

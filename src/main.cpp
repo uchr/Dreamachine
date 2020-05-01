@@ -8,8 +8,12 @@
 int main(int argc, char** argv) {
     PAKParser pakParser("package/the_gym.pak");
     pakParser.extractCDR();
+    pakParser.extractBUN();
     CDRParser cdrParser("extracted/the_gym.cdr");
-    cdrParser.parseScene();
+    SceneIndex sceneIndex = cdrParser.parseScene();
+    //for (auto& sir : sceneIndex.sirs)
+    //    std::cout << sir.filename << std::endl;
+    //"zoe_bag"
 
     return 0;
 

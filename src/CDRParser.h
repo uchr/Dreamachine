@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SceneIndex.h"
+
 #include <filesystem>
 #include <unordered_map>
 #include <string>
@@ -11,7 +13,7 @@ class CDRParser {
 public:
     CDRParser(std::filesystem::path path);
 
-    void parseScene();
+    SceneIndex parseScene();
 
 private:
     std::string indexString(BinReader& binReader);

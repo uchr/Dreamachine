@@ -6,12 +6,17 @@
 #include <fstream>
 #include <iostream>
 
+std::string getFileNameWithoutExtension(const std::string& path) {
+    std::filesystem::path temp(path);
+    return temp.filename().replace_extension("").string();
+}
+
 std::vector<std::string> getSir(SceneNode* children)
 {
     if (children == nullptr)
         return {};
 
-    std::vector<std::string> sirFilePathes;
+    std::vector<std::string> sirs;
     for (int i = 0; i < children->count(); i++)
     {
         SceneNode* child = children->at(i);
@@ -20,17 +25,17 @@ std::vector<std::string> getSir(SceneNode* children)
         {
             auto name = getEntryValue<std::string>(child, "param/tree");
             if (name.has_value())
-                sirFilePathes.emplace_back(*name);
+                sirs.emplace_back(*name);
         }
 
         if (type.has_value() && *type == "mod_core.capsule") {
-            std::vector<std::string> newSirFiles = getSir(child->goSub("param/child_param/children"));
-            sirFilePathes.reserve(sirFilePathes.size() + newSirFiles.size());
-            std::move(std::begin(newSirFiles), std::end(newSirFiles), std::back_inserter(sirFilePathes));
+            std::vector<std::string> newSirs = getSir(child->goSub("param/child_param/children"));
+            sirs.reserve(sirs.size() + newSirs.size());
+            std::move(std::begin(newSirs), std::end(newSirs), std::back_inserter(sirs));
         }
     }
 
-    return sirFilePathes;
+    return sirs;
 }
 
 std::vector<std::string> getBpr(SceneNode* root)
@@ -53,19 +58,21 @@ CDRParser::CDRParser(std::filesystem::path path)
     m_root = new SceneNodeValue(readSub(binReader), "root");
 }
 
-void CDRParser::parseScene() {
+SceneIndex CDRParser::parseScene() {
     std::ofstream treeOut("extracted/SceneTree.txt");
     print(m_root, treeOut, "");
 
-    std::vector<std::string> sirFilePathes = getSir(m_root->goSub("actor_param/child_param/children"));
-    std::cout << ".sir:" << std::endl;
-    for (const auto& filePath : sirFilePathes)
-        std::cout << filePath << std::endl;
+    std::vector<std::string> sirs = getSir(m_root->goSub("actor_param/child_param/children"));
+    std::vector<std::string> bprs = getBpr(m_root);
 
-    //std::vector<std::string> bprFilePathes = getBpr(m_root);
-    //std::cout << ".bpr:" << std::endl;
-    //for (const auto& name : bprFilePathes)
-    //    std::cout << name << std::endl;
+    SceneIndex sceneIndex;
+    for (const auto& sirPath : sirs) {
+        std::string filename = getFileNameWithoutExtension(sirPath);
+        SirEntry entry{filename, sirPath};
+        sceneIndex.sirs.emplace_back(entry);
+    }
+
+    return sceneIndex;
 }
 
 std::string CDRParser::indexString(BinReader& binReader)
