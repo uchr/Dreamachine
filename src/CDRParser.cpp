@@ -49,13 +49,15 @@ std::vector<std::string> getBpr(SceneNode* root)
     return {};
 }
 
-CDRParser::CDRParser(std::filesystem::path path)
-    : m_path(std::move(path))
-{
-    BinReader binReader(m_path);
+CDRParser::CDRParser(const std::filesystem::path& path) {
+    BinReader binReader(path);
     if (binReader.readStringLine() != magic || binReader.readStringLine() != "2x4")
         throw std::exception("shark3d binary magic wrong");
     m_root = new SceneNodeValue(readSub(binReader), "root");
+}
+
+CDRParser::~CDRParser() {
+    delete m_root;
 }
 
 SceneIndex CDRParser::parseScene() {

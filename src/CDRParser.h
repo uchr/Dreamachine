@@ -11,7 +11,8 @@ struct SceneNode;
 
 class CDRParser {
 public:
-    CDRParser(std::filesystem::path path);
+    CDRParser(const std::filesystem::path& path);
+    ~CDRParser();
 
     SceneIndex parseScene();
 
@@ -19,7 +20,6 @@ private:
     std::string indexString(BinReader& binReader);
     std::vector<SceneNode*> readSub(BinReader& binReader);
 
-    std::filesystem::path m_path;
     int m_stringCount = 0;
 
     std::unordered_map<int, std::string> m_stringTable;
