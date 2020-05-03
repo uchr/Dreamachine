@@ -1,6 +1,5 @@
 #include "CDRParser.h"
 #include "BinReader.h"
-#include "SceneNode.h"
 
 #include <cassert>
 #include <fstream>
@@ -75,6 +74,11 @@ SceneIndex CDRParser::parseScene() {
     }
 
     return sceneIndex;
+}
+
+SceneNode* CDRParser::getRoot() const
+{
+    return m_root;
 }
 
 std::string CDRParser::indexString(BinReader& binReader)

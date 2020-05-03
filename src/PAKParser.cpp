@@ -43,19 +43,7 @@ int char2hex(char c)
 
 } // anonymouse namespace
 
-struct FileEntry
-{
-    uint32_t offset, oldOffset;
-    int32_t size;
-    int32_t hOffset, hLen, hRef;
-    std::string partialName = "";
-
-    FileEntry(char* data, size_t& pos);
-    void fillIn(const std::vector<char>& nameBlock);
-    bool isRealFile() const;
-};
-
-FileEntry::FileEntry(char* data, size_t& pos) {
+PAKFileEntry::PAKFileEntry(char* data, size_t& pos) {
     offset = readUint32(data, pos);
     size = readInt32(data, pos);
     hOffset = readInt32(data, pos);
@@ -65,7 +53,7 @@ FileEntry::FileEntry(char* data, size_t& pos) {
         --hLen;
 }
 
-void FileEntry::fillIn(const std::vector<char>& nameBlock)
+void PAKFileEntry::fillIn(const std::vector<char>& nameBlock)
 {
     for (int i = hRef; i < nameBlock.size(); i++)
     {
@@ -75,10 +63,17 @@ void FileEntry::fillIn(const std::vector<char>& nameBlock)
     }
 }
 
-bool FileEntry::isRealFile() const
+bool PAKFileEntry::isRealFile() const
 {
     return size > 0;
 }
+
+PAKParser& PAKParser::instance() {
+    static PAKParser pakParser;
+    return pakParser;
+}
+
+PAKParser::PAKParser() = default;
 
 PAKParser::PAKParser(std::filesystem::path path) 
     : m_path(std::move(path))
@@ -88,18 +83,15 @@ PAKParser::PAKParser(std::filesystem::path path)
 
 PAKParser::~PAKParser() = default;
 
-void PAKParser::extractCDR() const {
-    std::string filename = m_path.filename().string();
-    filename = std::string(filename.begin(), filename.begin() + (filename.size() - 4));
-    const std::string innerPath = "data\\generated\\locations\\" + filename + ".cdr";
+void PAKParser::tryExtract(const std::filesystem::path& path) {
+    std::string innerPath = path.string();
+    std::replace(innerPath.begin(), innerPath.end(), '/', '\\');
+    std::cout << "Try to extract " << innerPath << std::endl;
 
-    std::cout << "Try to extract '" << filename << "' by '" << innerPath << "'" << std::endl;
-
-    const FileEntry* entry = findFile(innerPath);
+    const PAKFileEntry* entry = findFile(innerPath);
     if (entry != nullptr) {
-        const std::filesystem::path extractedPath = std::filesystem::path("extracted") / (filename + ".cdr");
-        extract(*entry, extractedPath);
-        std::cout << "Extracted successfully to '" << extractedPath.string() << "'" << std::endl;
+        extract(*entry, path);
+        std::cout << "Extracted successfully to " << path << std::endl;
     }
     else
     {
@@ -107,27 +99,7 @@ void PAKParser::extractCDR() const {
     }
 }
 
-void PAKParser::extractBUN() const
-{
-    std::string filename = m_path.filename().string();
-    filename = std::string(filename.begin(), filename.begin() + (filename.size() - 4));
-    const std::string innerPath = "bundles\\" + filename + ".bun";
-
-    std::cout << "Try to extract '" << filename << "' by '" << innerPath << "'" << std::endl;
-    
-    const FileEntry* entry = findFile(innerPath);
-    if (entry != nullptr) {
-        const std::filesystem::path extractedPath = std::filesystem::path("extracted") / (filename + ".bun");
-        extract(*entry, extractedPath);
-        std::cout << "Extracted successfully to '" << extractedPath.string() << "'" << std::endl;
-    }
-    else
-    {
-        std::cerr << "File not found" << std::endl;
-    }
-}
-
-void PAKParser::extract(const FileEntry& entry, const std::filesystem::path& outputPath) const {
+void PAKParser::extract(const PAKFileEntry& entry, const std::filesystem::path& outputPath) const {
     std::filesystem::create_directories(outputPath.parent_path());
 
     std::ifstream in(m_path.string(), std::ios::binary);
@@ -139,13 +111,13 @@ void PAKParser::extract(const FileEntry& entry, const std::filesystem::path& out
     out.write(data.data() + entry.offset, entry.size);
 }
 
-const FileEntry* PAKParser::findFile(std::string innerPath) const {
+const PAKFileEntry* PAKParser::findFile(std::string innerPath) const {
     std::transform(innerPath.begin(), innerPath.end(), innerPath.begin(),
                     [](unsigned char c) { return std::tolower(c); });
     return findFile(innerPath, "", 0);
 }
 
-const FileEntry* PAKParser::findFile(std::string innerPathLeft, std::string innerPathPassed, int offset) const {
+const PAKFileEntry* PAKParser::findFile(std::string innerPathLeft, std::string innerPathPassed, int offset) const {
     int num = char2hex(innerPathLeft[0]);
     if (num < 0)
         return nullptr;

@@ -24,6 +24,9 @@ add_executable(Dreamachine
     main.cpp
     MainWindow.cpp
     GLView.cpp
+    Scene.cpp
+    BundleHeader.cpp
+    BUNParser.cpp
     BinReader.cpp
     CDRParser.cpp
     PAKParser.cpp)

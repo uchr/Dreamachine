@@ -3,26 +3,38 @@
 #include <filesystem>
 #include <vector>
 
-struct FileEntry;
+struct PAKFileEntry
+{
+    uint32_t offset, oldOffset;
+    int32_t size;
+    int32_t hOffset, hLen, hRef;
+    std::string partialName = "";
+
+    PAKFileEntry(char* data, size_t& pos);
+    void fillIn(const std::vector<char>& nameBlock);
+    bool isRealFile() const;
+};
 
 class PAKParser
 {
 public:
+    static PAKParser& instance(); // TODO: Remove
+
+    PAKParser();
     PAKParser(std::filesystem::path path);
     ~PAKParser();
 
-    void extractCDR() const;
-    void extractBUN() const;
+    void tryExtract(const std::filesystem::path& innerPath);
 
 private:
-    void extract(const FileEntry& entry, const std::filesystem::path& outputPath) const;
+    void extract(const PAKFileEntry& entry, const std::filesystem::path& outputPath) const;
 
-    const FileEntry* findFile(std::string innerPath) const;
-    const FileEntry* findFile(std::string innerPathLeft, std::string innerPathPassed, int offset) const;
+    const PAKFileEntry* findFile(std::string innerPath) const;
+    const PAKFileEntry* findFile(std::string innerPathLeft, std::string innerPathPassed, int offset) const;
 
     void parse();
     size_t fileSize() const;
 
     std::filesystem::path m_path;
-    std::vector<FileEntry> m_entries;
+    std::vector<PAKFileEntry> m_entries;
 };

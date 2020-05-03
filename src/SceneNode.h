@@ -1,13 +1,12 @@
 #pragma once
 
-#include <variant>
 #include <string>
 #include <vector>
 #include <memory>
 #include <sstream>
 #include <optional>
 
-std::vector<std::string> split(const std::string& s, char delimiter)
+inline std::vector<std::string> split(const std::string& s, char delimiter)
 {
     std::vector<std::string> tokens;
     std::string token;
@@ -169,7 +168,7 @@ struct SceneNodeArray<SceneNode*> : public SceneNode {
     }
 };
 
-SceneNode* getNode(SceneNode* parent, const std::string& name)
+inline SceneNode* getNode(SceneNode* parent, const std::string& name)
 {
     if (parent->type != NodeType::Sub)
         return nullptr;
@@ -199,7 +198,7 @@ std::optional<std::vector<T>> getArray(SceneNode* node, const std::string& name)
     return dynamic_cast<SceneNodeArray<T>*>(cur)->value;
 }
 
-void print(SceneNode* root, std::ostream& out, const std::string& offset)
+inline void print(SceneNode* root, std::ostream& out, const std::string& offset)
 {
     out << offset << root->name;
     if (root->type == NodeType::Int)
