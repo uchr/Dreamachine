@@ -4,7 +4,7 @@
 
 #include <filesystem>
 
-struct SceneNode;
+struct SharkNode;
 
 struct Mesh {
     std::vector<Vector3> vertices;
@@ -26,7 +26,7 @@ private:
     void addScene(const std::filesystem::path& sirPath);
 
     std::vector<Mesh> loadSir(const std::filesystem::path& sirPath);
-    std::vector<Mesh> loadHierarchy(SceneNode* node, const std::string& smrFile);
+    std::vector<Mesh> loadHierarchy(SharkNode* node, const std::string& smrFile);
     std::optional<Mesh> loadMesh(const std::string& smrFile, const std::string& modelName);
 
     BundleHeader m_bundleHeader;

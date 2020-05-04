@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SceneIndex.h"
-#include "SceneNode.h"
+#include "SharkNode.h"
 
 #include <filesystem>
 #include <vector>
@@ -10,22 +10,22 @@
 
 class BinReader;
 
-class CDRParser {
+class SharkParser {
 public:
-    CDRParser(const std::filesystem::path& path);
-    ~CDRParser();
+    SharkParser(const std::filesystem::path& path);
+    ~SharkParser();
 
     SceneIndex parseScene();
 
-    SceneNode* getRoot() const;
+    SharkNode* getRoot() const;
 
 private:
     std::string indexString(BinReader& binReader);
-    std::vector<SceneNode*> readSub(BinReader& binReader);
+    std::vector<SharkNode*> readSub(BinReader& binReader);
 
     int m_stringCount = 0;
 
-    SceneNode* m_root;
+    SharkNode* m_root;
 
     std::unordered_map<int, std::string> m_stringTable;
 

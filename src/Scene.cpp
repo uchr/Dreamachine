@@ -1,7 +1,7 @@
 #include "Scene.h"
-#include "CDRParser.h"
+#include "SharkParser.h"
 #include "BUNParser.h"
-#include "SceneNode.h"
+#include "SharkNode.h"
 #include "BinReader.h"
 
 #include <fstream>
@@ -81,8 +81,8 @@ void Scene::addScene(const std::filesystem::path& sirPath) {
 
 std::vector<Mesh> Scene::loadSir(const std::filesystem::path& sirPath) {
     std::cout << "Parsing sir " << sirPath.string() << std::endl;
-    CDRParser cdrParser(sirPath.string());
-    SceneNode* root = cdrParser.getRoot()->goSub("data/root");
+    SharkParser cdrParser(sirPath.string());
+    SharkNode* root = cdrParser.getRoot()->goSub("data/root");
     if (root == nullptr)
     {
         std::cerr << sirPath.string() << " didn't contain 'data/root'" << std::endl;
@@ -93,7 +93,7 @@ std::vector<Mesh> Scene::loadSir(const std::filesystem::path& sirPath) {
     return loadHierarchy(root, smrPath.string());
 }
 
-std::vector<Mesh> Scene::loadHierarchy(SceneNode* node, const std::string& smrFile) {
+std::vector<Mesh> Scene::loadHierarchy(SharkNode* node, const std::string& smrFile) {
     if (node == nullptr)
         return {};
 
@@ -108,7 +108,7 @@ std::vector<Mesh> Scene::loadHierarchy(SceneNode* node, const std::string& smrFi
             loadedMeshes.push_back(std::move(*mesh));
     }
 
-    SceneNode* group = node->goSub("child_array");
+    SharkNode* group = node->goSub("child_array");
     if (group != nullptr) {
         // sub_array ?
         for (int i = 0; i < group->count(); ++i)

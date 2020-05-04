@@ -1,16 +1,12 @@
-#include "CDRParser.h"
+#include "SharkParser.h"
 #include "BinReader.h"
+#include "Utils.h"
 
 #include <cassert>
 #include <fstream>
 #include <iostream>
 
-std::string getFileNameWithoutExtension(const std::string& path) {
-    std::filesystem::path temp(path);
-    return temp.filename().replace_extension("").string();
-}
-
-std::vector<std::string> getSir(SceneNode* children)
+std::vector<std::string> getSir(SharkNode* children)
 {
     if (children == nullptr)
         return {};
@@ -18,7 +14,7 @@ std::vector<std::string> getSir(SceneNode* children)
     std::vector<std::string> sirs;
     for (int i = 0; i < children->count(); i++)
     {
-        SceneNode* child = children->at(i);
+        SharkNode* child = children->at(i);
         auto type = getEntryValue<std::string>(child, "type");
         if (type.has_value() && *type == "mod_engobj_funcom.loadtree")
         {
@@ -37,9 +33,9 @@ std::vector<std::string> getSir(SceneNode* children)
     return sirs;
 }
 
-std::vector<std::string> getBpr(SceneNode* root)
+std::vector<std::string> getBpr(SharkNode* root)
 {
-    SceneNode* node = root->goSub("actor_param/child_param/children");
+    SharkNode* node = root->goSub("actor_param/child_param/children");
     for (int i = 0; node != nullptr && i < node->count(); i++) {
         auto type = getEntryValue<std::string>(node->at(i), "type");
         if (type.has_value() && *type == "mod_engobj_funcom.locationinit")
@@ -48,18 +44,18 @@ std::vector<std::string> getBpr(SceneNode* root)
     return {};
 }
 
-CDRParser::CDRParser(const std::filesystem::path& path) {
+SharkParser::SharkParser(const std::filesystem::path& path) {
     BinReader binReader(path);
     if (binReader.readStringLine() != magic || binReader.readStringLine() != "2x4")
         throw std::exception("shark3d binary magic wrong");
-    m_root = new SceneNodeValue(readSub(binReader), "root");
+    m_root = new SharkNodeValue(readSub(binReader), "root");
 }
 
-CDRParser::~CDRParser() {
+SharkParser::~SharkParser() {
     delete m_root;
 }
 
-SceneIndex CDRParser::parseScene() {
+SceneIndex SharkParser::parseScene() {
     std::ofstream treeOut("extracted/SceneTree.txt");
     print(m_root, treeOut, "");
 
@@ -68,7 +64,7 @@ SceneIndex CDRParser::parseScene() {
 
     SceneIndex sceneIndex;
     for (const auto& sirPath : sirs) {
-        std::string filename = getFileNameWithoutExtension(sirPath);
+        std::string filename = Utils::getFileNameWithoutExtension(sirPath);
         SirEntry entry{filename, sirPath};
         sceneIndex.sirs.emplace_back(entry);
     }
@@ -76,12 +72,12 @@ SceneIndex CDRParser::parseScene() {
     return sceneIndex;
 }
 
-SceneNode* CDRParser::getRoot() const
+SharkNode* SharkParser::getRoot() const
 {
     return m_root;
 }
 
-std::string CDRParser::indexString(BinReader& binReader)
+std::string SharkParser::indexString(BinReader& binReader)
 {
     int num = static_cast<int>(binReader.readSharkNum());
     int index = m_stringCount - num;
@@ -94,11 +90,11 @@ std::string CDRParser::indexString(BinReader& binReader)
     return result;
 }
 
-std::vector<SceneNode*> CDRParser::readSub(BinReader& binReader)
+std::vector<SharkNode*> SharkParser::readSub(BinReader& binReader)
 {
     int num = static_cast<int>(binReader.readSharkNum());
 
-    std::vector<SceneNode*> nodes(num);
+    std::vector<SharkNode*> nodes(num);
     for (int i = 0; i < num; i++)
     {
         std::string name = indexString(binReader);
@@ -106,50 +102,50 @@ std::vector<SceneNode*> CDRParser::readSub(BinReader& binReader)
         switch (attachCode)
         {
             case 0:
-                nodes[i] = new SceneNode(name);
+                nodes[i] = new SharkNode(name);
                 break;
             case 1:
-                nodes[i] = new SceneNodeValue(binReader.readSharkNum(), name);
+                nodes[i] = new SharkNodeValue(binReader.readSharkNum(), name);
                 break;
             case 2:
                 {
                     std::vector<int64_t> table(binReader.readSharkNum());
                     for (int e = 0; e < table.size(); e++)
                         table[e] = binReader.readSharkNum();
-                    nodes[i] = new SceneNodeArray(table, name);
+                    nodes[i] = new SharkNodeArray(table, name);
                     break;
                 }
             case 4:
-                nodes[i] = new SceneNodeValue(binReader.readEndianFloat(), name);
+                nodes[i] = new SharkNodeValue(binReader.readEndianFloat(), name);
                 break;
             case 8:
                 {
                     std::vector<float> table(binReader.readSharkNum());
                     for (int e = 0; e < table.size(); e++)
                         table[e] = binReader.readEndianFloat();
-                    nodes[i] = new SceneNodeArray(table, name);
+                    nodes[i] = new SharkNodeArray(table, name);
                     break;
                 }
             case 0x10:
-                nodes[i] = new SceneNodeValue(indexString(binReader), name);
+                nodes[i] = new SharkNodeValue(indexString(binReader), name);
                 break;
             case 0x20:
                 {
                     std::vector<std::string> table(binReader.readSharkNum());
                     for (int e = 0; e < table.size(); e++)
                         table[e] = indexString(binReader);
-                    nodes[i] = new SceneNodeArray(table, name);
+                    nodes[i] = new SharkNodeArray(table, name);
                     break;
                 }
             case 0x40:
-                nodes[i] = new SceneNodeValue(readSub(binReader), name);
+                nodes[i] = new SharkNodeValue(readSub(binReader), name);
                 break;
             case 0x80:
                 {
-                    std::vector<SceneNode*> table(binReader.readSharkNum());
+                    std::vector<SharkNode*> table(binReader.readSharkNum());
                     for (int e = 0; e < table.size(); e++)
-                        table[e] = new SceneNodeValue(readSub(binReader), name);
-                    nodes[i] = new SceneNodeArray(table, name);
+                        table[e] = new SharkNodeValue(readSub(binReader), name);
+                    nodes[i] = new SharkNodeArray(table, name);
                     break;
                 }
             default:

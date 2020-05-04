@@ -1,6 +1,6 @@
 #include "MainWindow.h"
 #include "PAKParser.h"
-#include "CDRParser.h"
+#include "SharkParser.h"
 #include "Scene.h"
 #include "MeshExporter.h"
 
@@ -17,8 +17,8 @@ int main(int argc, char** argv) {
 
     PAKParser::instance() = PAKParser(pakPath);
 
-    CDRParser cdrParser(sceneSDRPath);
-    SceneIndex sceneIndex = cdrParser.parseScene();
+    SharkParser sceneSDRParser(sceneSDRPath);
+    SceneIndex sceneIndex = sceneSDRParser.parseScene();
     //for (auto& sir : sceneIndex.sirs)
     //    std::cout << sir.filename << " : " << sir.sirPath << std::endl;
 

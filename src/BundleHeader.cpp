@@ -89,11 +89,9 @@ bool MeshPart::load(BinReader& binReader) {
 bool MeshHeader::load(BinReader& binReader) {
     posName = binReader.readUint32();
     rescale = binReader.readFloat();
-    Vector3 posCenter;
     posCenter.x = binReader.readFloat();
     posCenter.y = binReader.readFloat();
     posCenter.z = binReader.readFloat();
-    Vector3 posBound;
     posBound.x = binReader.readFloat();
     posBound.y = binReader.readFloat();
     posBound.z = binReader.readFloat();

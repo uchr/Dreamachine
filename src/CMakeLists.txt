@@ -26,10 +26,13 @@ add_executable(Dreamachine
     GLView.cpp
     Scene.cpp
     BundleHeader.cpp
+    Utils.cpp
     BUNParser.cpp
+    PAKParser.cpp
     BinReader.cpp
-    CDRParser.cpp
-    PAKParser.cpp)
+    SharkNode.cpp
+    SharkParser.cpp
+)
 
 target_link_libraries(Dreamachine PRIVATE
     Corrade::Main
