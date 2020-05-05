@@ -6,6 +6,8 @@ find_package(Magnum REQUIRED
     Primitives
     Shaders)
 
+find_package(assimp REQUIRED)
+
 if(MAGNUM_TARGET_GLES AND NOT MAGNUM_TARGET_DESKTOP_GLES)
     find_package(Magnum REQUIRED EglContext)
 elseif(CORRADE_TARGET_WINDOWS)
@@ -25,6 +27,7 @@ add_executable(Dreamachine
     MainWindow.cpp
     GLView.cpp
     Scene.cpp
+    MeshExporter.cpp
     BundleHeader.cpp
     Utils.cpp
     BUNParser.cpp
@@ -42,6 +45,7 @@ target_link_libraries(Dreamachine PRIVATE
     Magnum::Shaders
     Magnum::MeshTools
     Magnum::Primitives
+    assimp::assimp
     Qt5::Widgets)
 
 # Make the executable a default target to build & run in Visual Studio

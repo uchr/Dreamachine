@@ -39,7 +39,7 @@ std::vector<std::string> getBpr(SharkNode* root)
     for (int i = 0; node != nullptr && i < node->count(); i++) {
         auto type = getEntryValue<std::string>(node->at(i), "type");
         if (type.has_value() && *type == "mod_engobj_funcom.locationinit")
-            return *getArray<std::string>(node->at(i), "param/bpr_files");
+            return *getEntryArray<std::string>(node->at(i), "param/bpr_files");
     }
     return {};
 }

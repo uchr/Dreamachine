@@ -19,23 +19,26 @@ int main(int argc, char** argv) {
 
     SharkParser sceneSDRParser(sceneSDRPath);
     SceneIndex sceneIndex = sceneSDRParser.parseScene();
-    //for (auto& sir : sceneIndex.sirs)
-    //    std::cout << sir.filename << " : " << sir.sirPath << std::endl;
-
-    //SirEntry selectedSir = sceneIndex.sirs[8]; //"zoe_bag"
-    //Scene scene(selectedSir.sirPath, bundleName);
 
     for (const auto& sir : sceneIndex.sirs) {
         Scene scene(sir.sirPath, bundleName);
-        std::cout << "\nExport " << sir.filename << " " << scene.meshes.size() << std::endl;
-        for (size_t i = 0; i < scene.meshes.size(); ++i) {
-            std::ofstream out("meshes\\" + sir.filename + "_" + std::to_string(i) + ".stl");
-            std::cout << ("meshes\\" + sir.filename + "_" + std::to_string(i) + ".stl") << std::endl;
-            exportSTL(scene.meshes[i], out);
+
+        if (scene.sceneRoot.has_value())
+            std::cout << "\nParsed successfully" << std::endl;
+        else 
+            std::cout << "\nParsed unsuccessfully" << std::endl;
+
+        if (scene.sceneRoot.has_value()) {
+            std::filesystem::path meshPath = "meshes\\" + sir.filename + ".fbx";
+            std::cout << meshPath << std::endl;
+            auto isExtracted = exportScene(*scene.sceneRoot, meshPath);
+            if (isExtracted)
+                std::cout << "Extracted successfully" << std::endl;
+            else 
+                std::cout << "Extracted unsuccessfully" << std::endl;
         }
     }
 
-    return 0;
     return 0;
 
     Magnum::Platform::GLContext context{Magnum::NoCreate, argc, argv};

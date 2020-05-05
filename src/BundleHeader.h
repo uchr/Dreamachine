@@ -1,19 +1,13 @@
 #pragma once
 
+#include "GeometryData.h"
+
 #include <vector>
 #include <string>
 #include <array>
 #include <optional>
 
 class BinReader;
-
-struct Vector2 {
-    float x, y;
-};
-
-struct Vector3 {
-    float x, y, z;
-};
 
 struct PartHeader
 {

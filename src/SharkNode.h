@@ -167,7 +167,7 @@ std::optional<T> getEntryValue(SharkNode* node, const std::string& name)
 }
 
 template <typename T>
-std::optional<std::vector<T>> getArray(SharkNode* node, const std::string& name)
+std::optional<std::vector<T>> getEntryArray(SharkNode* node, const std::string& name)
 {
     SharkNode* cur = node->goSub(name);
     if (cur == nullptr)
