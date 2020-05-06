@@ -5,6 +5,9 @@
 #include <filesystem>
 #include <vector>
 
+namespace parser
+{
+
 struct PAKFileEntry
 {
     uint32_t offset, oldOffset;
@@ -41,3 +44,5 @@ private:
 
     BinReader m_binReader;
 };
+
+}

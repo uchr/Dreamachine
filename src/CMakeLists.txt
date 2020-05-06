@@ -4,6 +4,8 @@ find_package(Magnum REQUIRED
     GL
     MeshTools
     Primitives
+    SceneGraph
+    Trade
     Shaders)
 
 find_package(assimp REQUIRED)
@@ -42,8 +44,10 @@ target_link_libraries(Dreamachine PRIVATE
     Magnum::GLContext
     Magnum::GL
     Magnum::Magnum
+    Magnum::SceneGraph
     Magnum::Shaders
     Magnum::MeshTools
+    Magnum::Trade
     Magnum::Primitives
     assimp::assimp
     Qt5::Widgets)

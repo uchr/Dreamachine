@@ -6,6 +6,9 @@
 #include <fstream>
 #include <iostream>
 
+namespace parser
+{
+
 std::vector<std::string> getSir(SharkNode* children)
 {
     if (children == nullptr)
@@ -55,7 +58,7 @@ SharkParser::~SharkParser() {
     delete m_root;
 }
 
-SceneIndex SharkParser::parseScene() {
+SceneIndex SharkParser::parseScene(const std::string& bundleName) {
     std::ofstream treeOut("extracted/SceneTree.txt");
     print(m_root, treeOut, "");
 
@@ -63,6 +66,7 @@ SceneIndex SharkParser::parseScene() {
     std::vector<std::string> bprs = getBpr(m_root);
 
     SceneIndex sceneIndex;
+    sceneIndex.bundleName = bundleName;
     for (const auto& sirPath : sirs) {
         std::string filename = Utils::getFileNameWithoutExtension(sirPath);
         SirEntry entry{filename, sirPath};
@@ -154,4 +158,6 @@ std::vector<SharkNode*> SharkParser::readSub(BinReader& binReader)
         }
     }
     return nodes;
+}
+
 }

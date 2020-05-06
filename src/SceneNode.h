@@ -4,6 +4,9 @@
 
 #include "GeometryData.h"
 
+namespace parser
+{
+
 struct SceneNode
 {
     std::optional<Mesh> mesh;
@@ -13,3 +16,5 @@ struct SceneNode
 
     std::vector<SceneNode> children;
 };
+
+}

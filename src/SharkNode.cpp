@@ -2,6 +2,9 @@
 
 #include <sstream>
 
+namespace parser
+{
+
 SharkNode* getNode(SharkNode* parent, const std::string& name)
 {
     if (parent->type != SharkNodeType::Sub)
@@ -49,4 +52,6 @@ void print(SharkNode* node, std::ostream& out, const std::string& offset)
             print(child, out, offset + " ");
         }
     }
+}
+
 }

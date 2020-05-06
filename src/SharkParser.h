@@ -8,6 +8,9 @@
 #include <unordered_map>
 #include <string>
 
+namespace parser
+{
+
 class BinReader;
 
 class SharkParser {
@@ -15,7 +18,7 @@ public:
     SharkParser(const std::filesystem::path& path);
     ~SharkParser();
 
-    SceneIndex parseScene();
+    SceneIndex parseScene(const std::string& bundleName); // TODO: Move it outside SharkParser
 
     SharkNode* getRoot() const;
 
@@ -31,3 +34,5 @@ private:
 
     const std::string magic = "shark3d_snake_binary";
 };
+
+}

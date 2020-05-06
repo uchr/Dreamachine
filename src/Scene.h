@@ -5,6 +5,9 @@
 
 #include <filesystem>
 
+namespace parser
+{
+
 struct SharkNode;
 
 class Scene
@@ -26,3 +29,5 @@ private:
     BundleHeader m_bundleHeader;
     std::string m_bundleName;
 };
+
+}

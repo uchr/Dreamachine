@@ -11,6 +11,9 @@
 #include <iostream>
 #include <array>
 
+namespace parser
+{
+
 const enum class ChannelType {
     Unused,
     Float2,
@@ -231,4 +234,6 @@ std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::strin
     }
 
     return mesh;
+}
+
 }

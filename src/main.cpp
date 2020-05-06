@@ -10,6 +10,8 @@
 #include <iostream>
 #include <fstream>
 
+using namespace parser;
+
 int main(int argc, char** argv) {
     const std::string bundleName = "the_gym";
     const std::filesystem::path pakPath = "package/" + bundleName +".pak";
@@ -18,8 +20,9 @@ int main(int argc, char** argv) {
     PAKParser::instance() = PAKParser(pakPath);
 
     SharkParser sceneSDRParser(sceneSDRPath);
-    SceneIndex sceneIndex = sceneSDRParser.parseScene();
+    SceneIndex sceneIndex = sceneSDRParser.parseScene(bundleName);
 
+    /*
     for (const auto& sir : sceneIndex.sirs) {
         Scene scene(sir.sirPath, bundleName);
 
@@ -38,7 +41,7 @@ int main(int argc, char** argv) {
                 std::cout << "Extracted unsuccessfully" << std::endl;
         }
     }
-    return 0;
+    */
 
     Magnum::Platform::GLContext context{Magnum::NoCreate, argc, argv};
     QApplication app{argc, argv};
@@ -48,7 +51,7 @@ int main(int argc, char** argv) {
     format.setProfile(QSurfaceFormat::CoreProfile);
     QSurfaceFormat::setDefaultFormat(format);
 
-    MainWindow mw{context};
+    MainWindow mw{context, sceneIndex};
     mw.show();
 
     return app.exec();

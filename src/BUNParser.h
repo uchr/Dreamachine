@@ -6,6 +6,9 @@
 #include <vector>
 #include <optional>
 
+namespace parser
+{
+
 class BUNParser
 {
 public:
@@ -15,3 +18,5 @@ public:
 private:
     std::filesystem::path m_path;
 };
+
+}

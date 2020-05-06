@@ -7,6 +7,9 @@
 #include <array>
 #include <optional>
 
+namespace parser
+{
+
 class BinReader;
 
 struct PartHeader
@@ -154,10 +157,6 @@ struct StreamFormat
     int32_t size;
     std::array<int, 16> channel;
     int32_t streams;
-    //VertexElement[] elem;
-    //VertexDeclaration decl;
-    //VertexElement[] tweenElem;
-    //VertexDeclaration tweenDecl;
 };
 
 struct BundleHeader  {
@@ -176,3 +175,5 @@ struct BundleHeader  {
         return nullptr;
     }
 };
+
+}

@@ -6,6 +6,9 @@
 #include <vector>
 #include <optional>
 
+namespace parser
+{
+
 enum SharkNodeType
 {
     Empty = 0,
@@ -173,4 +176,6 @@ std::optional<std::vector<T>> getEntryArray(SharkNode* node, const std::string& 
     if (cur == nullptr)
         return std::nullopt;
     return dynamic_cast<SharkNodeArray<T>*>(cur)->value;
+}
+
 }

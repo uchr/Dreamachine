@@ -1,11 +1,12 @@
 #include "MainWindow.h"
 #include "GLView.h"
+#include "SceneIndex.h"
 
 #include <QMenuBar>
 #include <QGridLayout>
 
-MainWindow::MainWindow(Magnum::Platform::GLContext& context)
-    : m_glView(new GLView(context, this))
+MainWindow::MainWindow(Magnum::Platform::GLContext& context, const parser::SceneIndex& sceneIndex)
+    : m_glView(new GLView(context, this, sceneIndex))
 {
     QMenu *fileMenu = menuBar()->addMenu("&File");
     QAction *open = new QAction("O&pen", fileMenu);

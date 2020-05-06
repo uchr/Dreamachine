@@ -13,7 +13,7 @@
 
 namespace magnum = Magnum::Math;
 
-aiNode* convertNode(const SceneNode& node, std::vector<aiMesh*>& aMeshes)
+aiNode* convertNode(const parser::SceneNode& node, std::vector<aiMesh*>& aMeshes)
 {
     aiNode* aNode = new aiNode();
 
@@ -56,8 +56,8 @@ aiNode* convertNode(const SceneNode& node, std::vector<aiMesh*>& aMeshes)
         aMesh->mNumUVComponents[0] = uvs.size();
 
         for (size_t i = 0; i < vertices.size(); ++i) {
-            const Vector3& v = vertices[i];
-            const Vector2& uv = uvs[i];
+            const parser::Vector3& v = vertices[i];
+            const parser::Vector2& uv = uvs[i];
 
             aMesh->mVertices[i] = aiVector3D(v.x, v.y, v.z);
             aMesh->mTextureCoords[0][i] = aiVector3D(uv.x, uv.y, 0);
@@ -90,7 +90,7 @@ aiNode* convertNode(const SceneNode& node, std::vector<aiMesh*>& aMeshes)
     return aNode;
 }
 
-bool exportScene(const SceneNode& root, const std::filesystem::path& path) {
+bool exportScene(const parser::SceneNode& root, const std::filesystem::path& path) {
     std::vector<aiMesh*> aMeshes;
     aiNode* aRoot = convertNode(root, aMeshes);
 

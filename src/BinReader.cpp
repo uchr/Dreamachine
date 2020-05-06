@@ -4,6 +4,9 @@
 #include <fstream>
 #include <iostream>
 
+namespace parser
+{
+
 BinReader::BinReader(const std::filesystem::path& path)
     : m_pos(0)
 {
@@ -197,4 +200,6 @@ size_t BinReader::fileSize(const std::filesystem::path& path) const {
     std::streampos end = file.tellg();
     file.close();
     return end - begin;
+}
+
 }

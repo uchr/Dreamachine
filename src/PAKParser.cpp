@@ -29,6 +29,9 @@ int char2hex(char c)
 
 } // anonymouse namespace
 
+namespace parser
+{
+
 PAKFileEntry::PAKFileEntry(BinReader& binReader) {
     offset = binReader.readUint32();
     size = binReader.readInt32();
@@ -158,4 +161,6 @@ void PAKParser::parse() {
 
     for (auto& entry : m_entries)
         entry.fillIn(nameBlock);
+}
+
 }

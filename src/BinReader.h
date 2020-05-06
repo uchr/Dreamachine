@@ -3,6 +3,9 @@
 #include <filesystem>
 #include <string>
 
+namespace parser
+{
+
 using byte = unsigned char;
 
 class BinReader
@@ -67,3 +70,5 @@ private:
 
     size_t m_posZero;
 };
+
+}

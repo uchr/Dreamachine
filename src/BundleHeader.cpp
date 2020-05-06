@@ -3,6 +3,9 @@
 
 #include <iostream>
 
+namespace parser
+{
+
 bool PartHeader::load(BinReader& binReader) {
     for (size_t i = 0; i < cfArray.size(); ++i)
         cfArray[i] = binReader.readUint32();
@@ -128,4 +131,6 @@ bool MeshInfo::load(BinReader& binReader) {
         parts[i].load(binReader);
     }
     return !parts.empty();
+}
+
 }

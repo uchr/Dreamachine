@@ -2,6 +2,9 @@
 
 #include <filesystem>
 
+namespace parser
+{
 struct SceneNode;
+}
 
-bool exportScene(const SceneNode& root, const std::filesystem::path& path);
+bool exportScene(const parser::SceneNode& root, const std::filesystem::path& path);

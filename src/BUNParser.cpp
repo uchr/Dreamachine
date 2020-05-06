@@ -5,6 +5,9 @@
 #include <iostream>
 #include <cassert>
 
+namespace parser
+{
+
 StreamFormat parseStreamFormat(BinReader& binReader) {
     StreamFormat streamFormat;
     streamFormat.size = binReader.readInt32() / 4;
@@ -103,4 +106,6 @@ BundleHeader BUNParser::parseHeader() {
     bundleHeader.fileEntries = fileEntries;
     bundleHeader.textures = textures;
     return bundleHeader;
+}
+
 }

@@ -3,6 +3,9 @@
 #include <string>
 #include <vector>
 
+namespace parser
+{
+
 struct SirEntry
 {
     std::string filename;
@@ -11,6 +14,8 @@ struct SirEntry
 
 struct SceneIndex
 {
-    std::string bundle;
+    std::string bundleName;
     std::vector<SirEntry> sirs;
 };
+
+}
