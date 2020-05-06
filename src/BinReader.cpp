@@ -31,6 +31,12 @@ std::string BinReader::readStringLine() {
     return result;
 }
 
+std::string BinReader::readString(size_t length) {
+    std::string result(m_data.begin() + m_pos, m_data.begin() + m_pos + length);
+    m_pos += length;
+    return result;
+}
+
 std::vector<char> BinReader::readChars(size_t length) {
     std::vector<char> result(m_data.begin() + m_pos, m_data.begin() + m_pos + length);
     m_pos += length;
@@ -178,6 +184,10 @@ void BinReader::Assert0(size_t pos)
 
 bool BinReader::isEnd() const {
     return m_pos == m_data.size();
+}
+
+const char* BinReader::data() const {
+    return m_data.data();
 }
 
 size_t BinReader::fileSize(const std::filesystem::path& path) const {

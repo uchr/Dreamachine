@@ -13,20 +13,6 @@ const std::vector<char> charTable{'\0', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 
                                   'x', 'y', 'z', '\\', '?', '?', '-', '_', '\'', '.', '0', '1',
                                   '2', '3', '4', '5', '6', '7', '8', '9'};
 
-uint32_t readUint32(char* data, size_t& pos)
-{
-    uint32_t value = *reinterpret_cast<uint32_t*>(data + pos);
-    pos += sizeof(uint32_t);
-    return value;
-}
-
-int32_t readInt32(char* data, size_t& pos)
-{
-    int32_t value = *reinterpret_cast<int32_t*>(data + pos);
-    pos += sizeof(int32_t);
-    return value;
-}
-
 char hex2char(int a) {
     if (a > charTable.size())
         return '?';
@@ -43,12 +29,12 @@ int char2hex(char c)
 
 } // anonymouse namespace
 
-PAKFileEntry::PAKFileEntry(char* data, size_t& pos) {
-    offset = readUint32(data, pos);
-    size = readInt32(data, pos);
-    hOffset = readInt32(data, pos);
-    hLen = readInt32(data, pos);
-    hRef = readInt32(data, pos);
+PAKFileEntry::PAKFileEntry(BinReader& binReader) {
+    offset = binReader.readUint32();
+    size = binReader.readInt32();
+    hOffset = binReader.readInt32();
+    hLen = binReader.readInt32();
+    hRef = binReader.readInt32();
     if (isRealFile())
         --hLen;
 }
@@ -76,7 +62,7 @@ PAKParser& PAKParser::instance() {
 PAKParser::PAKParser() = default;
 
 PAKParser::PAKParser(std::filesystem::path path) 
-    : m_path(std::move(path))
+    : m_binReader(path)
 {
     parse();
 }
@@ -101,14 +87,10 @@ void PAKParser::tryExtract(const std::filesystem::path& path) {
 
 void PAKParser::extract(const PAKFileEntry& entry, const std::filesystem::path& outputPath) const {
     std::filesystem::create_directories(outputPath.parent_path());
-
-    std::ifstream in(m_path.string(), std::ios::binary);
-    std::vector<char> data(fileSize());
-    in.read(data.data(), data.size());
-
     std::ofstream out(outputPath.string(), std::ios::binary);
     assert(out.is_open());
-    out.write(data.data() + entry.offset, entry.size);
+
+    out.write(m_binReader.data() + entry.offset, entry.size);
 }
 
 const PAKFileEntry* PAKParser::findFile(std::string innerPath) const {
@@ -149,50 +131,31 @@ const PAKFileEntry* PAKParser::findFile(std::string innerPathLeft, std::string i
 void PAKParser::parse() {
     m_entries.clear();
 
-    std::ifstream file(m_path.string(), std::ios::binary);
-    std::vector<char> data(fileSize());
-    file.read(data.data(), data.size());
-    size_t pos = 0;
+    m_binReader.setPosition(0);
 
     // read magic
-    const std::string magic = "tlj_pack0001";
-    for (int i = 0; i < magic.size(); i++)
-        if (data[i] != magic[i])
-            std::cout << "tljpak id mismatch";
-    pos += magic.size();
+    const std::string magicRequirement = "tlj_pack0001";
+    const std::string magic = m_binReader.readString(magicRequirement.size());
+    if (magicRequirement != magic)
+        throw std::runtime_error("tljpak magic start is missing");
 
-    uint32_t fileCount = readUint32(data.data(), pos);
-    uint32_t numCount = readUint32(data.data(), pos);
-    uint32_t byteCount = readUint32(data.data(), pos);
-
-    //std::cout << fileCount << std::endl;
-    //std::cout << numCount << std::endl;
-    //std::cout << byteCount << std::endl;
+    uint32_t fileCount = m_binReader.readUint32();
+    uint32_t numCount = m_binReader.readUint32();
+    uint32_t byteCount = m_binReader.readUint32();
 
     std::vector<char> nameBlock(byteCount);
     std::vector<int> lenBlock(numCount);
 
     for (uint32_t i = 0; i < fileCount; ++i)
-        m_entries.emplace_back(data.data(), pos);
+        m_entries.emplace_back(m_binReader);
 
-    std::vector<char> byteBlock(data.begin() + pos, data.begin() + pos + byteCount);
-    pos += byteCount;
-
+    std::vector<char> byteBlock = m_binReader.readChars(byteCount);
     for (uint32_t i = 0; i < byteCount; ++i)
         nameBlock[i] = hex2char((byteBlock[i]));
 
     for (uint32_t i = 0; i < numCount; ++i)
-        lenBlock[i] = readInt32(data.data(), pos);
+        lenBlock[i] = m_binReader.readInt32();
 
     for (auto& entry : m_entries)
         entry.fillIn(nameBlock);
-}
-
-size_t PAKParser::fileSize() const {
-    std::ifstream file(m_path.string(), std::ios::binary);
-    std::streampos begin = file.tellg();
-    file.seekg (0, std::ios::end);
-    std::streampos end = file.tellg();
-    file.close();
-    return end - begin;
 }

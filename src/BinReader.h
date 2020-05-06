@@ -8,6 +8,7 @@ using byte = unsigned char;
 class BinReader
 {
 public:
+    BinReader() = default;
     BinReader(const std::filesystem::path& path);
     BinReader(std::vector<char> data);
 
@@ -20,6 +21,7 @@ public:
     }
 
     std::string readStringLine();
+    std::string readString(size_t length);
     std::vector<char> readChars(size_t length);
 
     std::vector<uint32_t> readUint32Table(int length, uint32_t pos);
@@ -54,6 +56,8 @@ public:
     void Assert0(size_t pos);
 
     bool isEnd() const;
+
+    const char* data() const;
 
 private:
     size_t fileSize(const std::filesystem::path& path) const;

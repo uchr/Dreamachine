@@ -1,5 +1,7 @@
 #pragma once
 
+#include "BinReader.h"
+
 #include <filesystem>
 #include <vector>
 
@@ -10,7 +12,7 @@ struct PAKFileEntry
     int32_t hOffset, hLen, hRef;
     std::string partialName = "";
 
-    PAKFileEntry(char* data, size_t& pos);
+    PAKFileEntry(BinReader& binReader);
     void fillIn(const std::vector<char>& nameBlock);
     bool isRealFile() const;
 };
@@ -35,6 +37,7 @@ private:
     void parse();
     size_t fileSize() const;
 
-    std::filesystem::path m_path;
     std::vector<PAKFileEntry> m_entries;
+
+    BinReader m_binReader;
 };

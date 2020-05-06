@@ -23,14 +23,14 @@ int main(int argc, char** argv) {
     for (const auto& sir : sceneIndex.sirs) {
         Scene scene(sir.sirPath, bundleName);
 
+        std::cout << "\n" << sir.filename << ":" << std::endl;
         if (scene.sceneRoot.has_value())
-            std::cout << "\nParsed successfully" << std::endl;
+            std::cout << "Parsed successfully" << std::endl;
         else 
-            std::cout << "\nParsed unsuccessfully" << std::endl;
+            std::cout << "Parsed unsuccessfully" << std::endl;
 
         if (scene.sceneRoot.has_value()) {
             std::filesystem::path meshPath = "meshes\\" + sir.filename + ".fbx";
-            std::cout << meshPath << std::endl;
             auto isExtracted = exportScene(*scene.sceneRoot, meshPath);
             if (isExtracted)
                 std::cout << "Extracted successfully" << std::endl;
@@ -38,7 +38,6 @@ int main(int argc, char** argv) {
                 std::cout << "Extracted unsuccessfully" << std::endl;
         }
     }
-
     return 0;
 
     Magnum::Platform::GLContext context{Magnum::NoCreate, argc, argv};
