@@ -5,31 +5,13 @@
 #include <assimp/Exporter.hpp>
 #include <assimp/postprocess.h>
 
-#include <magnum/Math/Matrix4.h>
-#include <magnum/Math/Vector3.h>
-#include <magnum/Math/Quaternion.h>
-
 #include <iostream>
-
-namespace magnum = Magnum::Math;
 
 aiNode* convertNode(const parser::SceneNode& node, std::vector<aiMesh*>& aMeshes)
 {
     aiNode* aNode = new aiNode();
 
-    float scale = 1.0f / node.scale;
-    magnum::Vector3 position(node.position.x, node.position.y, node.position.z);
-    magnum::Quaternion rotation(magnum::Vector3(node.rotation.x, node.rotation.y, node.rotation.z), node.rotation.w);
-    if (rotation.length() < 0.01f)
-        rotation = magnum::Quaternion<float>();
-    else {
-        scale *= rotation.dot();
-        rotation = rotation.normalized();
-    }
-    magnum::Matrix4<float> rotationMatrix = magnum::Matrix4<float>::from(rotation.toMatrix(), {});
-    magnum::Matrix4<float> scalingMatrix = magnum::Matrix4<float>::scaling(magnum::Vector3(scale));
-    magnum::Matrix4<float> translationMatrix = magnum::Matrix4<float>::translation(position);
-    magnum::Matrix4<float> transformation = scalingMatrix * rotationMatrix * translationMatrix;
+    Magnum::Matrix4 transformation = node.computeTransformation();
 
     aNode->mTransformation = aiMatrix4x4(transformation[0][0], transformation[1][0], transformation[2][0], transformation[3][0],
                                          transformation[0][1], transformation[1][1], transformation[2][1], transformation[3][1],

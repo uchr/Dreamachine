@@ -3,6 +3,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Magnum/Math/Color.h>
+#include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/Platform/GLContext.h>
 #include <Magnum/SceneGraph/Camera.h>
@@ -16,11 +17,13 @@
 #include <QListView>
 #include <QMouseEvent>
 #include <QOpenGLWidget>
+#include <QElapsedTimer>
 #pragma warning(pop)
 
 namespace parser
 {
 struct SceneIndex;
+struct SceneNode;
 }
 
 typedef Magnum::SceneGraph::Object<Magnum::SceneGraph::MatrixTransformation3D> Object3D;
@@ -33,11 +36,16 @@ class GLView: public QOpenGLWidget {
     private:
         void initializeGL() override;
         void paintGL() override;
-        void resizeGL(int w, int h) override;
+        void resizeGL(int width, int height) override;
 
         void mousePressEvent(QMouseEvent *event) override;
         void mouseReleaseEvent(QMouseEvent *event) override;
         void mouseMoveEvent(QMouseEvent *event) override;
+        void keyPressEvent(QKeyEvent *event) override;
+
+        void updateCameraObject();
+        void setupScene(const parser::SceneNode& node);
+        void setupScene(const parser::SceneNode& node, Object3D& parent, size_t& meshIndex);
 
         Magnum::Platform::GLContext& m_context;
         Magnum::Vector2 m_previousCursorPosition;
@@ -51,13 +59,17 @@ class GLView: public QOpenGLWidget {
         Object3D m_manipulator, m_cameraObject;
         Magnum::SceneGraph::Camera3D* m_camera;
         Magnum::SceneGraph::DrawableGroup3D m_drawables;
-        Magnum::Vector3 m_previousPosition;
 
-        //std::unique_ptr<Magnum::GL::Mesh> m_mesh;
-        std::unique_ptr<Magnum::Shaders::Phong> m_shader;
+        float m_phi;
+        float m_theta;
+        Magnum::Vector3 m_cameraPosition;
 
-        Magnum::Matrix4 m_transformation, m_projection;
-        Magnum::Color3 m_color;
+        QElapsedTimer m_time;
+        float m_deltaTime = 0.0f;
+        int m_currentTime = 0;
+        int m_oldTime = 0;
 
         const parser::SceneIndex& m_sceneIndex;
+
+        const float CameraSpeed = 20.0f;
 };

@@ -8,6 +8,8 @@
 MainWindow::MainWindow(Magnum::Platform::GLContext& context, const parser::SceneIndex& sceneIndex)
     : m_glView(new GLView(context, this, sceneIndex))
 {
+    m_glView->setFocusPolicy(Qt::FocusPolicy::StrongFocus);
+
     QMenu *fileMenu = menuBar()->addMenu("&File");
     QAction *open = new QAction("O&pen", fileMenu);
     fileMenu->addAction(open);

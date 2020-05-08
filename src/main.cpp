@@ -52,6 +52,7 @@ int main(int argc, char** argv) {
     QSurfaceFormat::setDefaultFormat(format);
 
     MainWindow mw{context, sceneIndex};
+    mw.resize(1366, 768);
     mw.show();
 
     return app.exec();

@@ -140,15 +140,16 @@ std::optional<SceneNode> Scene::loadHierarchy(SharkNode* node, const std::string
     if (rotation.has_value())
         sceneNode.rotation = Quaternion{rotation->at(0), rotation->at(1), rotation->at(2), rotation->at(3)};
     else 
-        sceneNode.rotation = Quaternion{0.0f, 0.0f, 0.0f, 0.0f};
+        sceneNode.rotation = Quaternion{0.0f, 0.0f, 0.0f, 1.0f};
     sceneNode.scale = 1.0f;
 
-    auto name = getEntryValue<std::string>(node, "model");
+    sceneNode.name = *getEntryValue<std::string>(node, "name");
+    auto modelName = getEntryValue<std::string>(node, "model");
     auto shader = getEntryValue<std::string>(node, "shader");
-    if (name.has_value() && shader.has_value())
+    if (modelName.has_value() && shader.has_value())
     {
-        std::cout << "Trying to load " << smrFile << " * " << *name << std::endl;
-        auto mesh = loadMesh(smrFile, *name, sceneNode.scale);
+        std::cout << "Trying to load " << smrFile << " * " << *modelName << std::endl;
+        auto mesh = loadMesh(smrFile, *modelName, sceneNode.scale);
         if (mesh.has_value()) {
             isMmeshLoaded = true;
             sceneNode.mesh = mesh;
@@ -168,9 +169,9 @@ std::optional<SceneNode> Scene::loadHierarchy(SharkNode* node, const std::string
         }
     }
 
-    if (isMmeshLoaded)
+    if (isMmeshLoaded || !sceneNode.children.empty())
         return sceneNode;
-
+    
     return std::nullopt;
 }
 
