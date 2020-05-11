@@ -86,7 +86,7 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
         // Create polygons
         for (size_t ti = 0; ti < mesh.indices.size();)
         {
-            fbxMesh->BeginPolygon();
+            fbxMesh->BeginPolygon(0);
 
             fbxMesh->AddPolygon(mesh.indices[ti++]);
             fbxMesh->AddPolygon(mesh.indices[ti++]);
@@ -136,13 +136,13 @@ bool exportScene(const parser::SceneNode& root, const std::filesystem::path& pat
     FbxIOSettings* ios = FbxIOSettings::Create(manager, IOSROOT);
     manager->SetIOSettings(ios);
 
-    //ios->SetBoolProp(EXP_FBX_MATERIAL, true);
-    //ios->SetBoolProp(EXP_FBX_TEXTURE, true);
-    //ios->SetBoolProp(EXP_FBX_EMBEDDED, true);
-    //ios->SetBoolProp(EXP_FBX_SHAPE, true);
-    //ios->SetBoolProp(EXP_FBX_GOBO, true);
-    //ios->SetBoolProp(EXP_FBX_ANIMATION, false);
-    //ios->SetBoolProp(EXP_FBX_GLOBAL_SETTINGS, true);
+    ios->SetBoolProp(EXP_FBX_MATERIAL, true);
+    ios->SetBoolProp(EXP_FBX_TEXTURE, true);
+    ios->SetBoolProp(EXP_FBX_EMBEDDED, true);
+    ios->SetBoolProp(EXP_FBX_SHAPE, true);
+    ios->SetBoolProp(EXP_FBX_GOBO, true);
+    ios->SetBoolProp(EXP_FBX_ANIMATION, false);
+    ios->SetBoolProp(EXP_FBX_GLOBAL_SETTINGS, true);
 
     FbxString applicationPath = FbxGetApplicationDirectory();
     manager->LoadPluginsDirectory(applicationPath.Buffer());
