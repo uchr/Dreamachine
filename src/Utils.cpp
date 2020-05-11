@@ -23,4 +23,8 @@ std::string getFileNameWithoutExtension(const std::string& path) {
     return temp.filename().replace_extension("").string();
 }
 
+std::string getFileNameWithoutExtension(const std::filesystem::path& path) {
+    return path.filename().replace_extension("").string();
+}
+
 }

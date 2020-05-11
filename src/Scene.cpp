@@ -7,9 +7,14 @@
 #include "SceneNode.h"
 #include "SharkParser.h"
 
+#include <DirectXTex.h>
+#include <d3d11.h>
+
+#include <array>
 #include <fstream>
 #include <iostream>
-#include <array>
+#include <locale>
+#include <sstream>
 
 namespace parser
 {
@@ -25,13 +30,35 @@ const size_t entrySize[] = { 0, 8, 12, 16, 4 };
 const std::string entryName[] = { "Unused", "Float2", "Float3", "Float4", "Color" };
 const ChannelType entryType[] = { ChannelType::Unused, ChannelType::Float2, ChannelType::Float3, ChannelType::Float4, ChannelType::Color };
 
-//Textures parseTextures(std::vector<std::string> texturePath) {
-//    Textures textures;
-//    for (int i = 0; i < texturePath.size(); ++i) {
-//        PAKParser::instance().tryExtract(texturePath[i]);
-//    }
-//    return textures;
-//}
+std::wstring widen(const std::string& str)
+{
+    std::wostringstream wstm ;
+    const std::ctype<wchar_t>& ctfacet = std::use_facet<std::ctype<wchar_t>>(wstm.getloc()) ;
+    for( size_t i = 0; i < str.size(); ++i)
+        wstm << ctfacet.widen(str[i]);
+    return wstm.str() ;
+}
+
+std::vector<std::filesystem::path> parseTextures(const std::vector<std::filesystem::path>& texturesPath) {
+    std::vector<std::filesystem::path> exportedTexturesPath;
+    for (int i = 0; i < texturesPath.size(); ++i) {
+        PAKParser::instance().tryExtract(texturesPath[i]);
+        DirectX::ScratchImage imageData;
+        HRESULT hr = DirectX::LoadFromWICFile(widen(texturesPath[i].string()).c_str(), DirectX::WIC_FLAGS_NONE, nullptr, imageData);
+        if (!SUCCEEDED(hr)) {
+            hr = DirectX::LoadFromDDSFile(widen(texturesPath[i].string()).c_str(), DirectX::WIC_FLAGS_NONE, nullptr, imageData);
+        }
+        if (SUCCEEDED(hr)) {
+            std::filesystem::path exportedTexturePath = "textures";
+            exportedTexturePath /= texturesPath[i].filename();
+            std::filesystem::create_directories(exportedTexturePath.parent_path());
+            hr = DirectX::SaveToWICFile(*imageData.GetImage(0, 0, 0), DirectX::WIC_FLAGS_NONE, DirectX::GetWICCodec(DirectX::WIC_CODEC_PNG), widen(exportedTexturePath.string()).c_str());
+            if (SUCCEEDED(hr))
+                exportedTexturesPath.emplace_back(exportedTexturePath);
+        }
+    }
+    return exportedTexturesPath;
+}
 
 std::optional<Mesh> parseMesh(const StreamFormat& streamFormat, const std::vector<char>& verticesBuffer, const std::vector<char>& indicesBuffer)
 {
@@ -224,13 +251,13 @@ std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::strin
     if (mesh.has_value()) {
         std::cout << "Mesh parsed successfully" << std::endl;
         std::cout << "Adding textures" << std::endl;
-        for (int i = 0; i < part.header.numTexStages; i++)
+        for (int i = 0; i < std::min(1, part.header.numTexStages); i++) // TODO: Load not only 1 stage
         {
-            std::vector<std::string> texturePath(part.header.numTextures);
+            std::vector<std::filesystem::path> texturePath(part.header.numTextures);
             for (int l = 0; l < part.header.numTextures; l++) {
                 texturePath[l] = (part.tex[l].texIdx[i] == -1) ? "" : header.textures[info.texIdx[part.tex[l].texIdx[i]]];
             }
-            //mesh->textureStage.push_back(parseTextures(texturePath));
+            mesh->texturePath = parseTextures(texturePath);
         }
     }
 

@@ -22,8 +22,21 @@ int main(int argc, char** argv) {
     SharkParser sceneSDRParser(sceneSDRPath);
     SceneIndex sceneIndex = sceneSDRParser.parseScene(bundleName);
 
-    /*
+    Magnum::Platform::GLContext context{Magnum::NoCreate, argc, argv};
+    QApplication app{argc, argv};
+
+    QSurfaceFormat format;
+    format.setVersion(4, 6);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    QSurfaceFormat::setDefaultFormat(format);
+
+    MainWindow mw{context, sceneIndex};
+    mw.resize(1366, 768);
+    mw.show();
+
+    //for (const auto& sir : {sceneIndex.sirs[4]}) {
     for (const auto& sir : sceneIndex.sirs) {
+    //for (const auto& sir : {sceneIndex.sirs[8]}) {
         Scene scene(sir.sirPath, bundleName);
 
         std::cout << "\n" << sir.filename << ":" << std::endl;
@@ -41,19 +54,6 @@ int main(int argc, char** argv) {
                 std::cout << "Extracted unsuccessfully" << std::endl;
         }
     }
-    */
-
-    Magnum::Platform::GLContext context{Magnum::NoCreate, argc, argv};
-    QApplication app{argc, argv};
-
-    QSurfaceFormat format;
-    format.setVersion(4, 6);
-    format.setProfile(QSurfaceFormat::CoreProfile);
-    QSurfaceFormat::setDefaultFormat(format);
-
-    MainWindow mw{context, sceneIndex};
-    mw.resize(1366, 768);
-    mw.show();
 
     return app.exec();
 }

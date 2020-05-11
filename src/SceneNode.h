@@ -10,6 +10,12 @@
 namespace parser
 {
 
+struct Transofrmation {
+    Vector3 translation;
+    Vector3 rotation;
+    float scale;
+};
+
 struct SceneNode
 {
     std::string name;
@@ -22,7 +28,8 @@ struct SceneNode
 
     std::vector<SceneNode> children;
 
-    Magnum::Matrix4 computeTransformation() const;
+    Magnum::Matrix4 computeTransformationMatrix() const;
+    Transofrmation computeTransformation() const;
 
     size_t numberOfMeshes() const;
     void print() const;

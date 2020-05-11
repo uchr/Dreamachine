@@ -1,97 +1,162 @@
 #include "MeshExporter.h"
 #include "SceneNode.h"
+#include "Utils.h"
 
-#include <assimp/scene.h>
-#include <assimp/Exporter.hpp>
-#include <assimp/postprocess.h>
+#include <fbxsdk.h>
 
 #include <iostream>
 
-aiNode* convertNode(const parser::SceneNode& node, std::vector<aiMesh*>& aMeshes)
+void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const parser::SceneNode& node)
 {
-    aiNode* aNode = new aiNode();
+    auto createMaterial = [&](const parser::Mesh& mesh) {
+        FbxString materialName = Utils::getFileNameWithoutExtension(mesh.texturePath[0]).c_str();
 
-    Magnum::Matrix4 transformation = node.computeTransformation();
+        // Create material
+        FbxString shadingName = "Phong";
+        FbxSurfacePhong* material = FbxSurfacePhong::Create(manager, materialName.Buffer());
+        material->Ambient.Set(FbxDouble3(0.8, 0.8, 0.8));
 
-    aNode->mTransformation = aiMatrix4x4(transformation[0][0], transformation[1][0], transformation[2][0], transformation[3][0],
-                                         transformation[0][1], transformation[1][1], transformation[2][1], transformation[3][1],
-                                         transformation[0][2], transformation[1][2], transformation[2][2], transformation[3][2],
-                                         transformation[0][3], transformation[1][3], transformation[2][3], transformation[3][3]);
+        // Create texture
+        std::filesystem::path texturePath = "./" / mesh.texturePath[0].filename();
+        FbxFileTexture* texture = FbxFileTexture::Create(manager, texturePath.string().c_str());
+        texture->SetFileName(texturePath.string().c_str());
+        texture->SetTextureUse(FbxTexture::eStandard);
+        texture->SetMappingType(FbxTexture::eUV);
+        texture->SetMaterialUse(FbxFileTexture::eModelMaterial);
+        texture->SetSwapUV(false);
+        texture->SetTranslation(0.0, 0.0);
+        texture->SetScale(1.0, 1.0);
+        texture->SetRotation(0.0, 0.0);
+        texture->UVSet.Set(FbxString("DiffuseUV"));
+        material->Diffuse.ConnectSrcObject(texture);
 
+        return material;
+    };
 
-    if (node.mesh.has_value()) {
-        aMeshes.emplace_back(new aiMesh());
-        aiMesh* aMesh = aMeshes[aMeshes.size() - 1];
-        aMesh->mMaterialIndex = 0;
+    FbxNode* fbxMeshNode = FbxNode::Create(manager, node.name.c_str());
+    parent->AddChild(fbxMeshNode);
 
-        aNode->mMeshes = new unsigned int[1];
-        aNode->mMeshes[0] = aMeshes.size() - 1;
-        aNode->mNumMeshes = 1;
+    parser::Transofrmation transformation = node.computeTransformation();
+    fbxMeshNode->LclTranslation.Set(FbxVector4(transformation.translation.x, transformation.translation.y, transformation.translation.z));
+    fbxMeshNode->LclRotation.Set(FbxVector4(transformation.rotation.x * 57.2958, transformation.rotation.y * 57.2958, transformation.rotation.z * 57.2958));
+    fbxMeshNode->LclScaling.Set(FbxVector4(transformation.scale, transformation.scale, transformation.scale));
 
-        const auto& vertices = node.mesh->vertices;
-        const auto& uvs = node.mesh->uvs;
+    if (node.mesh.has_value() && !node.mesh->texturePath.empty()) {
+        const auto& mesh = *node.mesh;
+        FbxMesh* fbxMesh = FbxMesh::Create(manager, node.name.c_str());
+        fbxMesh->InitControlPoints(mesh.vertices.size());
+        FbxVector4* controlPoints = fbxMesh->GetControlPoints();
 
-        aMesh->mVertices = new aiVector3D[vertices.size()];
-        aMesh->mTextureCoords[0] = new aiVector3D[uvs.size()];
-
-        aMesh->mNumVertices = vertices.size();
-        aMesh->mNumUVComponents[0] = uvs.size();
-
-        for (size_t i = 0; i < vertices.size(); ++i) {
-            const parser::Vector3& v = vertices[i];
-            const parser::Vector2& uv = uvs[i];
-
-            aMesh->mVertices[i] = aiVector3D(v.x, v.y, v.z);
-            aMesh->mTextureCoords[0][i] = aiVector3D(uv.x, uv.y, 0);
+        // Create normal layer
+        FbxLayer* layer = fbxMesh->GetLayer(0);
+        if (!layer) {
+            fbxMesh->CreateLayer();
+            layer = fbxMesh->GetLayer(0);
         }
 
-        const auto& indices = node.mesh->indices;
+        // Setup layers
+        FbxLayerElementNormal* layerNormal = FbxLayerElementNormal::Create(fbxMesh, "");
+        layerNormal->SetMappingMode(FbxLayerElement::eByControlPoint);
+        layerNormal->SetReferenceMode(FbxLayerElement::eDirect);
 
-        aMesh->mFaces = new aiFace[indices.size() / 3];
-        aMesh->mNumFaces = indices.size() / 3;
+        FbxLayerElementUV* layerTexcoord = FbxLayerElementUV::Create(fbxMesh, "DiffuseUV");
+        layerTexcoord->SetMappingMode(FbxLayerElement::eByControlPoint);
+        layerTexcoord->SetReferenceMode(FbxLayerElement::eDirect);
+        layer->SetUVs(layerTexcoord, FbxLayerElement::eTextureDiffuse);
 
-        for (size_t ti = 0; ti < indices.size() / 3; ++ti) {
-            aiFace& face = aMesh->mFaces[ti];
+        // Fill data
+        for (size_t i = 0; i < mesh.vertices.size(); i++)
+        {
+            const parser::Vector3& v = mesh.vertices[i];
+            const parser::Vector3& n = mesh.normals[i];
+            const parser::Vector2& uv = mesh.uvs[i];
 
-            face.mIndices = new unsigned int[3];
-            face.mNumIndices = 3;
-
-            face.mIndices[0] = indices[ti * 3 + 0];
-            face.mIndices[1] = indices[ti * 3 + 1];
-            face.mIndices[2] = indices[ti * 3 + 2];
+            controlPoints[i] = FbxVector4(v.x, v.y, v.z);
+            layerNormal->GetDirectArray().Add(FbxVector4(n.x, n.y, n.z));
+            layerTexcoord->GetDirectArray().Add(FbxVector2(uv.x, uv.y));
         }
+        layer->SetNormals(layerNormal);
+
+        // Create material
+        FbxLayerElementMaterial* layerMaterial = FbxLayerElementMaterial::Create(fbxMesh, "");
+        layerMaterial->SetMappingMode(FbxLayerElement::eByPolygon);
+        layerMaterial->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+        layer->SetMaterials(layerMaterial);
+
+        // Create polygons
+        for (size_t ti = 0; ti < mesh.indices.size();)
+        {
+            fbxMesh->BeginPolygon();
+
+            fbxMesh->AddPolygon(mesh.indices[ti++]);
+            fbxMesh->AddPolygon(mesh.indices[ti++]);
+            fbxMesh->AddPolygon(mesh.indices[ti++]);
+
+            fbxMesh->EndPolygon();
+        }
+
+        fbxMeshNode->AddMaterial(createMaterial(mesh));
+        fbxMeshNode->SetNodeAttribute(fbxMesh);
+        fbxMeshNode->SetShadingMode(FbxNode::eTextureShading);
     }
 
     if (!node.children.empty()) {
-        aiNode** aChildren = new aiNode*[node.children.size()];
         for (size_t i = 0; i < node.children.size(); ++i)
-            aChildren[i] = convertNode(node.children[i], aMeshes);
-        aNode->addChildren(node.children.size(), aChildren);
+            createScene(manager, scene, fbxMeshNode, node.children[i]);
+    }
+}
+
+bool saveScene(FbxManager* manager, FbxDocument* scene, const std::string& filename, int fileFormat)
+{
+    FbxExporter* exporter = FbxExporter::Create(manager, "");
+
+    if (!exporter->Initialize(filename.c_str(), fileFormat, manager->GetIOSettings()))
+    {
+        std::cerr << "Call to FbxExporter::Initialize() failed." << std::endl;
+        std::cerr << "Error returned:" << exporter->GetStatus().GetErrorString() << std::endl << std::endl;
+        return false;
     }
 
-    return aNode;
+    bool status = exporter->Export(scene);
+    exporter->Destroy();
+    return status;
 }
 
 bool exportScene(const parser::SceneNode& root, const std::filesystem::path& path) {
-    std::vector<aiMesh*> aMeshes;
-    aiNode* aRoot = convertNode(root, aMeshes);
+    FbxManager* manager = FbxManager::Create();
+    if (!manager)
+    {
+        FBXSDK_printf("Error: Unable to create FBX Manager!\n");
+        return false;
+    }
+    else {
+        FBXSDK_printf("Autodesk FBX SDK version %s\n", manager->GetVersion());
+    }
 
-    aiScene scene;
-    scene.mRootNode = aRoot;
+    FbxIOSettings* ios = FbxIOSettings::Create(manager, IOSROOT);
+    manager->SetIOSettings(ios);
 
-    scene.mMaterials = new aiMaterial*[1];
-    scene.mNumMaterials = 1;
-    scene.mMaterials[0] = new aiMaterial();
+    //ios->SetBoolProp(EXP_FBX_MATERIAL, true);
+    //ios->SetBoolProp(EXP_FBX_TEXTURE, true);
+    //ios->SetBoolProp(EXP_FBX_EMBEDDED, true);
+    //ios->SetBoolProp(EXP_FBX_SHAPE, true);
+    //ios->SetBoolProp(EXP_FBX_GOBO, true);
+    //ios->SetBoolProp(EXP_FBX_ANIMATION, false);
+    //ios->SetBoolProp(EXP_FBX_GLOBAL_SETTINGS, true);
 
-    scene.mMeshes = new aiMesh*[aMeshes.size()];
-    scene.mNumMeshes = aMeshes.size();
+    FbxString applicationPath = FbxGetApplicationDirectory();
+    manager->LoadPluginsDirectory(applicationPath.Buffer());
 
-    for (size_t i = 0; i < aMeshes.size(); ++i)
-        scene.mMeshes[i] = aMeshes[i];
+    FbxScene* scene = FbxScene::Create(manager, "Dreamachine Scene");
+    if (!scene)
+    {
+        FBXSDK_printf("Error: Unable to create FBX scene!\n");
+        return false;
+    }
 
-    Assimp::Exporter exporter;
-    std::string extension = path.extension().string();
-    extension.erase(0, 1);
-    aiReturn res = exporter.Export(&scene, extension, path.string().c_str());
-    return res == 0;
+    createScene(manager, scene, scene->GetRootNode(), root);
+    saveScene(manager, scene, path.string().c_str(), -1);
+
+    manager->Destroy();
+    return true;
 }

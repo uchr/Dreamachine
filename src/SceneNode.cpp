@@ -2,10 +2,35 @@
 
 #include <Magnum/Math/Quaternion.h>
 
+#include <fmt/format.h>
+
 #include <iostream>
 
 namespace
 {
+
+Magnum::Vector3 toEulerAngles(Magnum::Quaternion q) {
+    Magnum::Vector3 angles;
+
+    // roll (x-axis rotation)
+    double sinr_cosp = 2 * (q.scalar() * q.vector().x() + q.vector().y() * q.vector().z());
+    double cosr_cosp = 1 - 2 * (q.vector().x() * q.vector().x() + q.vector().y() * q.vector().y());
+    angles.x() = std::atan2(sinr_cosp, cosr_cosp);
+
+    // pitch (y-axis rotation)
+    double sinp = 2 * (q.scalar() * q.vector().y() - q.vector().z() * q.vector().x());
+    if (std::abs(sinp) >= 1)
+        angles.y() = std::copysign(Magnum::Math::Constants<float>::pi() / 2, sinp); // use 90 degrees if out of range
+    else
+        angles.y() = std::asin(sinp);
+
+    // yaw (z-axis rotation)
+    double siny_cosp = 2 * (q.scalar() * q.vector().z() + q.vector().x() * q.vector().y());
+    double cosy_cosp = 1 - 2 * (q.vector().y() * q.vector().y() + q.vector().z() * q.vector().z());
+    angles.z() = std::atan2(siny_cosp, cosy_cosp);
+
+    return angles;
+}
 
 void numberOfMeshes(const parser::SceneNode& node, size_t& number)
 {
@@ -20,10 +45,9 @@ void numberOfMeshes(const parser::SceneNode& node, size_t& number)
 
 void print(const parser::SceneNode& node, std::string offset)
 {
-    std::cout << offset << node.name;
-    if (node.mesh.has_value())
-        std::cout << "(d)";
-    std::cout << std::endl;
+    bool hasMesh = node.mesh.has_value();
+    bool hasTexture = node.mesh.has_value() && !node.mesh->texturePath.empty();
+    fmt::print("{}{} {}{}\n", offset, node.name, hasMesh ? "(m)" : "", hasTexture ? "(t)" : "");
 
     if (!node.children.empty()) {
         for (size_t i = 0; i < node.children.size(); ++i)
@@ -36,7 +60,7 @@ void print(const parser::SceneNode& node, std::string offset)
 namespace parser
 {
 
-Magnum::Matrix4 SceneNode::computeTransformation() const {
+Magnum::Matrix4 SceneNode::computeTransformationMatrix() const {
     float magnumScale = 1.0f / scale;
     Magnum::Vector3 magnumPosition(position.x, position.y, position.z);
     Magnum::Quaternion magnumRotation(Magnum::Vector3(rotation.x, rotation.y, rotation.z), rotation.w);
@@ -52,6 +76,21 @@ Magnum::Matrix4 SceneNode::computeTransformation() const {
     Magnum::Matrix4 transformationMatrix = scalingMatrix * rotationMatrix * translationMatrix;
 
     return transformationMatrix;
+}
+
+Transofrmation SceneNode::computeTransformation() const
+{
+    float magnumScale = 1.0f / scale;
+    Magnum::Vector3 magnumPosition(position.x, position.y, position.z);
+    Magnum::Quaternion magnumRotation(Magnum::Vector3(rotation.x, rotation.y, rotation.z), rotation.w);
+    if (!magnumRotation.isNormalized()) {
+        magnumScale *= magnumRotation.dot();
+        magnumRotation = magnumRotation.normalized();
+    }
+
+    Magnum::Vector3 euler = toEulerAngles(magnumRotation);
+
+    return Transofrmation{position, Vector3{euler.x(), euler.y(), euler.z()}, magnumScale};
 }
 
 size_t SceneNode::numberOfMeshes() const {
