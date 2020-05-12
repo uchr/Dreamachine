@@ -39,7 +39,7 @@ std::wstring widen(const std::string& str)
     return wstm.str() ;
 }
 
-std::vector<std::filesystem::path> parseTextures(const std::vector<std::filesystem::path>& texturesPath) {
+std::vector<std::filesystem::path> parseTextures(const std::vector<std::filesystem::path>& texturesPath, const std::filesystem::path& exportPath) {
     std::vector<std::filesystem::path> exportedTexturesPath;
     for (int i = 0; i < texturesPath.size(); ++i) {
         PAKParser::instance().tryExtract(texturesPath[i]);
@@ -49,12 +49,11 @@ std::vector<std::filesystem::path> parseTextures(const std::vector<std::filesyst
             hr = DirectX::LoadFromDDSFile(widen(texturesPath[i].string()).c_str(), DirectX::WIC_FLAGS_NONE, nullptr, imageData);
         }
         if (SUCCEEDED(hr)) {
-            std::filesystem::path exportedTexturePath = "textures";
-            exportedTexturePath /= texturesPath[i].filename();
-            std::filesystem::create_directories(exportedTexturePath.parent_path());
-            hr = DirectX::SaveToWICFile(*imageData.GetImage(0, 0, 0), DirectX::WIC_FLAGS_NONE, DirectX::GetWICCodec(DirectX::WIC_CODEC_PNG), widen(exportedTexturePath.string()).c_str());
+            std::filesystem::create_directories(exportPath);
+            std::filesystem::path fileExportPath = exportPath / texturesPath[i].filename();
+            hr = DirectX::SaveToWICFile(*imageData.GetImage(0, 0, 0), DirectX::WIC_FLAGS_NONE, DirectX::GetWICCodec(DirectX::WIC_CODEC_PNG), widen(fileExportPath.string()).c_str());
             if (SUCCEEDED(hr))
-                exportedTexturesPath.emplace_back(exportedTexturePath);
+                exportedTexturesPath.emplace_back(fileExportPath);
         }
     }
     return exportedTexturesPath;
@@ -115,10 +114,11 @@ void printFormat(StreamFormat& streamFormat)
     std::cout << std::endl;
 }
 
-Scene::Scene(const std::filesystem::path& sirPath, const std::string& bundleName)
+Scene::Scene(const SirEntry& sirEntry, const std::string& bundleName)
     : sceneRoot(std::nullopt)
+    , m_sirEntry(sirEntry)
 {
-    loadScene(sirPath, bundleName);
+    loadScene(sirEntry.sirPath, bundleName);
 }
 
 void Scene::loadScene(const std::filesystem::path& sirPath, const std::string& bundleName) {
@@ -149,10 +149,10 @@ std::optional<SceneNode> Scene::loadSir(const std::filesystem::path& sirPath) {
     auto smrPath = sirPath;
     smrPath.replace_extension(".smr");
 
-    return loadHierarchy(root, smrPath.string());
+    return loadHierarchy(root, smrPath.string(), m_sirEntry.filename);
 }
 
-std::optional<SceneNode> Scene::loadHierarchy(SharkNode* node, const std::string& smrFile) {
+std::optional<SceneNode> Scene::loadHierarchy(SharkNode* node, const std::string& smrFile, const std::filesystem::path& hierarchyPath) {
     if (node == nullptr)
         return std::nullopt;
 
@@ -176,7 +176,7 @@ std::optional<SceneNode> Scene::loadHierarchy(SharkNode* node, const std::string
     if (modelName.has_value() && shader.has_value())
     {
         std::cout << "Trying to load " << smrFile << " * " << *modelName << std::endl;
-        auto mesh = loadMesh(smrFile, *modelName, sceneNode.scale);
+        auto mesh = loadMesh(smrFile, hierarchyPath / sceneNode.name, *modelName, sceneNode.scale);
         if (mesh.has_value()) {
             isMmeshLoaded = true;
             sceneNode.mesh = mesh;
@@ -188,7 +188,7 @@ std::optional<SceneNode> Scene::loadHierarchy(SharkNode* node, const std::string
         // sub_array ?
         for (int i = 0; i < group->count(); ++i)
         {
-            auto child = loadHierarchy(group->at(i), smrFile);
+            auto child = loadHierarchy(group->at(i), smrFile, hierarchyPath / sceneNode.name);
             if (child.has_value()) {
                 isMmeshLoaded = true;
                 sceneNode.children.push_back(*child);
@@ -202,7 +202,7 @@ std::optional<SceneNode> Scene::loadHierarchy(SharkNode* node, const std::string
     return std::nullopt;
 }
 
-std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::string& modelName, float& outScale) {
+std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::filesystem::path& hierarchyPath, const std::string& modelName, float& outScale) {
     BinReader binReader("bundles/" + m_bundleName + ".bun");
 
     BundleHeader& header = m_bundleHeader;
@@ -247,17 +247,28 @@ std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::strin
     binReader.setPosition(data.posStart);
     std::vector<char> vertices = binReader.readChars(4 * format.size * patchVertices);
 
+    if (hierarchyPath.filename() == "casa_placdesucre_entrance")
+        std::cout << "test" << std::endl;
     auto mesh = parseMesh(format, vertices, part.indices);
     if (mesh.has_value()) {
         std::cout << "Mesh parsed successfully" << std::endl;
         std::cout << "Adding textures" << std::endl;
-        for (int i = 0; i < std::min(1, part.header.numTexStages); i++) // TODO: Load not only 1 stage
+        mesh->textureStagePath.resize(part.header.numTexStages);
+        int vOffset = 0;
+        int iOffset = 0;
+        for (int i = 0; i < part.header.numTexStages; ++i)
         {
+            //fmt::print("v {} + {} : {}\ni {} + {} : {}\n", vOffset, part.stageVertices[i], mesh->vertices.size(), iOffset, part.stageIndices[i], mesh->indices.size(), mesh->indices.size());
             std::vector<std::filesystem::path> texturePath(part.header.numTextures);
-            for (int l = 0; l < part.header.numTextures; l++) {
+            for (int l = 0; l < part.header.numTextures; ++l) {
                 texturePath[l] = (part.tex[l].texIdx[i] == -1) ? "" : header.textures[info.texIdx[part.tex[l].texIdx[i]]];
             }
-            mesh->texturePath = parseTextures(texturePath);
+            std::filesystem::path exportPath = std::filesystem::path("meshes") / m_bundleName / hierarchyPath;
+            mesh->textureStagePath[i] = parseTextures(texturePath, exportPath);
+            mesh->verticesStage.emplace_back(vOffset, vOffset + part.stageVertices[i]);
+            mesh->indicesStage.emplace_back(iOffset, iOffset + part.stageIndices[i]);
+            vOffset += part.stageVertices[i];
+            iOffset += part.stageIndices[i];
         }
     }
 

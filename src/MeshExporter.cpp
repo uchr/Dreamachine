@@ -8,8 +8,8 @@
 
 void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const parser::SceneNode& node)
 {
-    auto createMaterial = [&](const parser::Mesh& mesh) {
-        FbxString materialName = Utils::getFileNameWithoutExtension(mesh.texturePath[0]).c_str();
+    auto createMaterial = [&](const parser::Mesh& mesh, int stage) {
+        FbxString materialName = Utils::getFileNameWithoutExtension(mesh.textureStagePath[stage][0]).c_str();
 
         // Create material
         FbxString shadingName = "Phong";
@@ -17,7 +17,7 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
         material->Ambient.Set(FbxDouble3(0.8, 0.8, 0.8));
 
         // Create texture
-        std::filesystem::path texturePath = "./" / mesh.texturePath[0].filename();
+        std::filesystem::path texturePath = mesh.textureStagePath[stage][0];
         FbxFileTexture* texture = FbxFileTexture::Create(manager, texturePath.string().c_str());
         texture->SetFileName(texturePath.string().c_str());
         texture->SetTextureUse(FbxTexture::eStandard);
@@ -41,7 +41,7 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
     fbxMeshNode->LclRotation.Set(FbxVector4(transformation.rotation.x * 57.2958, transformation.rotation.y * 57.2958, transformation.rotation.z * 57.2958));
     fbxMeshNode->LclScaling.Set(FbxVector4(transformation.scale, transformation.scale, transformation.scale));
 
-    if (node.mesh.has_value() && !node.mesh->texturePath.empty()) {
+    if (node.mesh.has_value() && !node.mesh->textureStagePath.empty() && !node.mesh->textureStagePath[0].empty()) {
         const auto& mesh = *node.mesh;
         FbxMesh* fbxMesh = FbxMesh::Create(manager, node.name.c_str());
         fbxMesh->InitControlPoints(mesh.vertices.size());
@@ -78,24 +78,26 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
         layer->SetNormals(layerNormal);
 
         // Create material
-        FbxLayerElementMaterial* layerMaterial = FbxLayerElementMaterial::Create(fbxMesh, "");
-        layerMaterial->SetMappingMode(FbxLayerElement::eByPolygon);
-        layerMaterial->SetReferenceMode(FbxLayerElement::eIndexToDirect);
-        layer->SetMaterials(layerMaterial);
+        for (size_t stage = 0; stage < mesh.indicesStage.size(); ++stage) {
+            fbxMeshNode->AddMaterial(createMaterial(mesh, stage));
+            FbxLayerElementMaterial* layerMaterial = FbxLayerElementMaterial::Create(fbxMesh, "");
+            layerMaterial->SetMappingMode(FbxLayerElement::eByPolygon);
+            layerMaterial->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+            layer->SetMaterials(layerMaterial);
 
-        // Create polygons
-        for (size_t ti = 0; ti < mesh.indices.size();)
-        {
-            fbxMesh->BeginPolygon(0);
+            // Create polygons
+            for (size_t ti = mesh.indicesStage[stage].first; ti < mesh.indicesStage[stage].second;)
+            {
+                fbxMesh->BeginPolygon(fbxMeshNode->GetMaterialCount() - 1);
 
-            fbxMesh->AddPolygon(mesh.indices[ti++]);
-            fbxMesh->AddPolygon(mesh.indices[ti++]);
-            fbxMesh->AddPolygon(mesh.indices[ti++]);
+                fbxMesh->AddPolygon(mesh.indices[ti++]);
+                fbxMesh->AddPolygon(mesh.indices[ti++]);
+                fbxMesh->AddPolygon(mesh.indices[ti++]);
 
-            fbxMesh->EndPolygon();
+                fbxMesh->EndPolygon();
+            }
         }
 
-        fbxMeshNode->AddMaterial(createMaterial(mesh));
         fbxMeshNode->SetNodeAttribute(fbxMesh);
         fbxMeshNode->SetShadingMode(FbxNode::eTextureShading);
     }
@@ -122,7 +124,10 @@ bool saveScene(FbxManager* manager, FbxDocument* scene, const std::string& filen
     return status;
 }
 
-bool exportScene(const parser::SceneNode& root, const std::filesystem::path& path) {
+bool exportScene(const parser::SceneNode& root, const std::string& bundleName, const std::string& meshName) {
+    std::filesystem::path path = std::filesystem::path("meshes") / bundleName / meshName / (meshName + ".fbx");
+    std::filesystem::create_directories(path.parent_path());
+
     FbxManager* manager = FbxManager::Create();
     if (!manager)
     {

@@ -13,7 +13,7 @@
 using namespace parser;
 
 int main(int argc, char** argv) {
-    const std::string bundleName = "the_gym";
+    const std::string bundleName = "hospital_room";
     const std::filesystem::path pakPath = "package/" + bundleName +".pak";
     const std::filesystem::path sceneSDRPath = "data/generated/locations/" + bundleName + ".cdr";
 
@@ -34,10 +34,8 @@ int main(int argc, char** argv) {
     mw.resize(1366, 768);
     mw.show();
 
-    //for (const auto& sir : {sceneIndex.sirs[4]}) {
-    for (const auto& sir : sceneIndex.sirs) {
-    //for (const auto& sir : {sceneIndex.sirs[8]}) {
-        Scene scene(sir.sirPath, bundleName);
+    for (const auto& sir : sceneIndex.sirs) { // the_gym: 4, 8
+        Scene scene(sir, bundleName);
 
         std::cout << "\n" << sir.filename << ":" << std::endl;
         if (scene.sceneRoot.has_value())
@@ -46,8 +44,7 @@ int main(int argc, char** argv) {
             std::cout << "Parsed unsuccessfully" << std::endl;
 
         if (scene.sceneRoot.has_value()) {
-            std::filesystem::path meshPath = "meshes\\" + sir.filename + ".fbx";
-            auto isExtracted = exportScene(*scene.sceneRoot, meshPath);
+            auto isExtracted = exportScene(*scene.sceneRoot, bundleName, sir.filename);
             if (isExtracted)
                 std::cout << "Extracted successfully" << std::endl;
             else 

@@ -26,7 +26,9 @@ struct Mesh
     std::vector<Vector3> normals;
     std::vector<Vector2> uvs;
     std::vector<int> indices; // TODO: uint16_t
-    std::vector<std::filesystem::path> texturePath;
+    std::vector<std::vector<std::filesystem::path>> textureStagePath;
+    std::vector<std::pair<int, int>> indicesStage;
+    std::vector<std::pair<int, int>> verticesStage;
 };
 
 }

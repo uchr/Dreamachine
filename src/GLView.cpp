@@ -160,12 +160,14 @@ void GLView::initializeGL() {
         .setSpecularColor(0x111111_rgbf)
         .setShininess(80.0f);
 
-    parser::Scene scene(m_sceneIndex.sirs[4].sirPath, m_sceneIndex.bundleName);
-    assert(scene.sceneRoot.has_value());
+    std::unique_ptr<parser::Scene> scene = std::make_unique<parser::Scene>(m_sceneIndex.sirs[0], m_sceneIndex.bundleName);
+    for (int i = 1; !scene->sceneRoot.has_value() && i < m_sceneIndex.sirs.size(); ++i)
+        scene = std::make_unique<parser::Scene>(m_sceneIndex.sirs[i], m_sceneIndex.bundleName);
+    assert(scene->sceneRoot.has_value());
 
-    m_meshes = Containers::Array<Containers::Optional<GL::Mesh>>{scene.sceneRoot->numberOfMeshes()};
-    m_textures = Containers::Array<Containers::Optional<Magnum::GL::Texture2D>>{scene.sceneRoot->numberOfMeshes()};
-    setupScene(*scene.sceneRoot);
+    m_meshes = Containers::Array<Containers::Optional<GL::Mesh>>{scene->sceneRoot->numberOfMeshes()};
+    m_textures = Containers::Array<Containers::Optional<Magnum::GL::Texture2D>>{scene->sceneRoot->numberOfMeshes()};
+    setupScene(*scene->sceneRoot);
 
     m_time.start();
     m_oldTime = m_time.elapsed();
@@ -278,7 +280,7 @@ void GLView::setupScene(const parser::SceneNode& node, Object3D& parent, size_t&
         PluginManager::Manager<Trade::AbstractImporter> manager;
         Containers::Pointer<Trade::AbstractImporter> importer = manager.loadAndInstantiate("PngImporter");
         assert(importer);
-        importer->openFile(mesh.texturePath[0].string());
+        importer->openFile(mesh.textureStagePath[0][0].string());
         assert(importer->isOpened());
 
         Containers::Optional<Trade::ImageData2D> imageData = importer->image2D(0);

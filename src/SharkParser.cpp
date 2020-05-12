@@ -59,9 +59,6 @@ SharkParser::~SharkParser() {
 }
 
 SceneIndex SharkParser::parseScene(const std::string& bundleName) {
-    std::ofstream treeOut("extracted/SceneTree.txt");
-    print(m_root, treeOut, "");
-
     std::vector<std::string> sirs = getSir(m_root->goSub("actor_param/child_param/children"));
     std::vector<std::string> bprs = getBpr(m_root);
 
