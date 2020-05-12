@@ -3,7 +3,7 @@
 ![Imgur](https://i.imgur.com/RRW1aNL.png)
 *Hope to see gif with Zoë here*
 
-It is a tool for viewing and exporting assets from *DreamFall: The Longest Journey*. Currently it can export meshes and part of textures to **FBX**. I'm working on this tool as part of a [remake](https://youtu.be/LZ3Gs5kFNkg) of a small level from *DreamFall: The Longest Journey* on Unreal Engine 4.
+It is a tool for viewing and exporting assets from *Dreamfall: The Longest Journey*. Currently it can export meshes and part of textures to **FBX**. I'm working on this tool as part of a [remake](https://youtu.be/LZ3Gs5kFNkg) of a small level from *Dreamfall: The Longest Journey* on Unreal Engine 4.
 
 ## Current state
 - [x] Meshes
