@@ -2,6 +2,7 @@ find_package(Qt5Widgets REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(Corrade REQUIRED Main)
 find_package(FBXSDK REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 find_package(Magnum REQUIRED
     GL
     MeshTools
@@ -68,6 +69,7 @@ target_link_libraries(Dreamachine PRIVATE
     Magnum::Primitives
     Qt5::Widgets
     fmt::fmt
+    spdlog::spdlog
     "d3d11.lib"
 )
 

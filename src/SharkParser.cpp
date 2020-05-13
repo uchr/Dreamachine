@@ -2,9 +2,10 @@
 #include "BinReader.h"
 #include "Utils.h"
 
+#include <spdlog/spdlog.h>
+
 #include <cassert>
 #include <fstream>
-#include <iostream>
 
 namespace parser
 {
@@ -150,7 +151,7 @@ std::vector<SharkNode*> SharkParser::readSub(BinReader& binReader)
                     break;
                 }
             default:
-                std::cerr << "Unrecognized code in shark3d binary !" << std::endl;
+                spdlog::error("Unrecognized code in shark3d binary!");
                 return {};
         }
     }

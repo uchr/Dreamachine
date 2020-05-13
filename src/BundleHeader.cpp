@@ -1,8 +1,6 @@
 #include "BundleHeader.h"
 #include "BinReader.h"
 
-#include <iostream>
-
 namespace parser
 {
 

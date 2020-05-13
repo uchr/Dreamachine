@@ -4,8 +4,6 @@
 
 #include <fmt/format.h>
 
-#include <iostream>
-
 namespace
 {
 

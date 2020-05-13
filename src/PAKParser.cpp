@@ -1,8 +1,9 @@
 #include "PAKParser.h"
 
+#include <spdlog/spdlog.h>
+
 #include <cassert>
 #include <fstream>
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -75,16 +76,16 @@ PAKParser::~PAKParser() = default;
 void PAKParser::tryExtract(const std::filesystem::path& path) {
     std::string innerPath = path.string();
     std::replace(innerPath.begin(), innerPath.end(), '/', '\\');
-    std::cout << "Try to extract " << innerPath << std::endl;
+    spdlog::debug("Try to extract {}", innerPath);
 
     const PAKFileEntry* entry = findFile(innerPath);
     if (entry != nullptr) {
         extract(*entry, path);
-        std::cout << "Extracted successfully to " << path << std::endl;
+        spdlog::debug("Extracted successfully to {}", path.string());
     }
     else
     {
-        std::cerr << "File not found" << std::endl;
+        spdlog::warn("{} not found", innerPath); 
     }
 }
 

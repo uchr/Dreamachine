@@ -3,8 +3,7 @@
 #include "Utils.h"
 
 #include <fbxsdk.h>
-
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const parser::SceneNode& node)
 {
@@ -114,8 +113,8 @@ bool saveScene(FbxManager* manager, FbxDocument* scene, const std::string& filen
 
     if (!exporter->Initialize(filename.c_str(), fileFormat, manager->GetIOSettings()))
     {
-        std::cerr << "Call to FbxExporter::Initialize() failed." << std::endl;
-        std::cerr << "Error returned:" << exporter->GetStatus().GetErrorString() << std::endl << std::endl;
+        spdlog::error("Call to FbxExporter::Initialize() failed.");
+        spdlog::error("Error returned: {} \n\n", exporter->GetStatus().GetErrorString());
         return false;
     }
 
@@ -131,11 +130,11 @@ bool exportScene(const parser::SceneNode& root, const std::string& bundleName, c
     FbxManager* manager = FbxManager::Create();
     if (!manager)
     {
-        FBXSDK_printf("Error: Unable to create FBX Manager!\n");
+        spdlog::error("Error: Unable to create FBX Manager!");
         return false;
     }
     else {
-        FBXSDK_printf("Autodesk FBX SDK version %s\n", manager->GetVersion());
+        spdlog::debug("Autodesk FBX SDK version {}", manager->GetVersion());
     }
 
     FbxIOSettings* ios = FbxIOSettings::Create(manager, IOSROOT);
@@ -155,7 +154,7 @@ bool exportScene(const parser::SceneNode& root, const std::string& bundleName, c
     FbxScene* scene = FbxScene::Create(manager, "Dreamachine Scene");
     if (!scene)
     {
-        FBXSDK_printf("Error: Unable to create FBX scene!\n");
+        spdlog::error("Error: Unable to create FBX scene!");
         return false;
     }
 

@@ -1,8 +1,9 @@
 #include "BUNParser.h"
 #include "BinReader.h"
 
+#include <spdlog/spdlog.h>
+
 #include <array>
-#include <iostream>
 #include <cassert>
 
 namespace parser
@@ -25,10 +26,10 @@ BUNParser::BUNParser(std::filesystem::path path)
 BundleHeader BUNParser::parseHeader() {
     BinReader binReader(m_path);
 
-    std::cout << "Parse bun header" << std::endl;
+    spdlog::debug("Parse bun header");
     int posOrigin = binReader.readInt32() + 4;
 
-    std::cout << "Reading textures" << std::endl;
+    spdlog::debug("Reading textures");
     int numberOfTextures = binReader.readInt32();
     std::vector<std::string> textures(numberOfTextures);
     for (int i = 0; i < numberOfTextures; ++i)
@@ -47,7 +48,7 @@ BundleHeader BUNParser::parseHeader() {
         binReader.shiftPosition(dataHeader[i].length);
     }
 
-    std::cout << "Reading 0pos" << std::endl;
+    spdlog::debug("Reading 0pos");
     size_t posZero = binReader.getPosition();
     int numberOfFiles = binReader.readInt32();
     int numStreamFormats = binReader.readInt32();
@@ -57,7 +58,7 @@ BundleHeader BUNParser::parseHeader() {
     for (int i = 0; i < numberOfFiles; ++i)
         fileEntries[i].posStart = binReader.readUint32();
 
-    std::cout << "Reading stream formats" << std::endl;
+    spdlog::debug("Reading stream formats");
     std::vector<StreamFormat> streamFormats(numStreamFormats);
     for (int i = 0; i < numStreamFormats; ++i)
         streamFormats[i] = parseStreamFormat(binReader);

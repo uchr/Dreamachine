@@ -28,8 +28,6 @@
 #include <Magnum/Trade/SceneData.h>
 #include <Magnum/Trade/TextureData.h>
 
-#include <iostream>
-
 using namespace Magnum;
 using namespace Math::Literals;
 

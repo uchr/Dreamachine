@@ -2,7 +2,6 @@
 #include "PAKParser.h"
 
 #include <fstream>
-#include <iostream>
 
 namespace parser
 {

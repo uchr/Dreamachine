@@ -4,15 +4,18 @@
 #include "Scene.h"
 #include "MeshExporter.h"
 
+#include <spdlog/spdlog.h>
+
 #include <QSurfaceFormat>
 #include <QtWidgets/QApplication>
 
-#include <iostream>
 #include <fstream>
 
 using namespace parser;
 
 int main(int argc, char** argv) {
+    spdlog::set_level(spdlog::level::debug);
+
     const std::string bundleName = "hospital_room";
     const std::filesystem::path pakPath = "package/" + bundleName +".pak";
     const std::filesystem::path sceneSDRPath = "data/generated/locations/" + bundleName + ".cdr";
@@ -37,18 +40,15 @@ int main(int argc, char** argv) {
     for (const auto& sir : sceneIndex.sirs) { // the_gym: 4, 8
         Scene scene(sir, bundleName);
 
-        std::cout << "\n" << sir.filename << ":" << std::endl;
         if (scene.sceneRoot.has_value())
-            std::cout << "Parsed successfully" << std::endl;
+            spdlog::info("SIR: '{}' parsed", sir.filename);
         else 
-            std::cout << "Parsed unsuccessfully" << std::endl;
+            spdlog::warn("SIR: '{}' not parsed", sir.filename);
 
         if (scene.sceneRoot.has_value()) {
             auto isExtracted = exportScene(*scene.sceneRoot, bundleName, sir.filename);
-            if (isExtracted)
-                std::cout << "Extracted successfully" << std::endl;
-            else 
-                std::cout << "Extracted unsuccessfully" << std::endl;
+            if (!isExtracted)
+                spdlog::error("Scene: '{}' not extracted", sir.filename);
         }
     }
 

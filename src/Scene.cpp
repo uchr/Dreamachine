@@ -10,9 +10,10 @@
 #include <DirectXTex.h>
 #include <d3d11.h>
 
+#include <spdlog/spdlog.h>
+
 #include <array>
 #include <fstream>
-#include <iostream>
 #include <locale>
 #include <sstream>
 
@@ -97,21 +98,20 @@ std::optional<Mesh> parseMesh(const StreamFormat& streamFormat, const std::vecto
 
 void printFormat(StreamFormat& streamFormat)
 {
-    for (int ch = 0; ch < 16; ch++)
-    {
-        if (streamFormat.channel[ch] != -1) {
-            std::cout << entryName[streamFormat.channel[ch]] << " ";
-        }
+    spdlog::enable_backtrace(16);
+    for (int ch = 0; ch < 16; ch++) {
+        if (streamFormat.channel[ch] != -1)
+            spdlog::debug(entryName[streamFormat.channel[ch]]);
     }
-    std::cout << std::endl;
+    spdlog::dump_backtrace();
 
+    spdlog::enable_backtrace(16);
     for (int ch = 0; ch < 16; ch++)
     {
-        if (streamFormat.channel[ch] != -1) {
-            std::cout << entrySize[streamFormat.channel[ch]] << " ";
-        }
+        if (streamFormat.channel[ch] != -1)
+            spdlog::debug(entrySize[streamFormat.channel[ch]]);
     }
-    std::cout << std::endl;
+    spdlog::dump_backtrace();
 }
 
 Scene::Scene(const SirEntry& sirEntry, const std::string& bundleName)
@@ -137,12 +137,12 @@ void Scene::addScene(const std::filesystem::path& sirPath) {
 }
 
 std::optional<SceneNode> Scene::loadSir(const std::filesystem::path& sirPath) {
-    std::cout << "Parsing sir " << sirPath.string() << std::endl;
+    spdlog::info("Parsing SIR {}...", sirPath.string());
     SharkParser cdrParser(sirPath.string());
     SharkNode* root = cdrParser.getRoot()->goSub("data/root");
     if (root == nullptr)
     {
-        std::cerr << sirPath.string() << " didn't contain 'data/root'" << std::endl;
+        spdlog::error("{} didn't contain 'data/root'", sirPath.string());
         return std::nullopt;
     }
 
@@ -175,7 +175,7 @@ std::optional<SceneNode> Scene::loadHierarchy(SharkNode* node, const std::string
     auto shader = getEntryValue<std::string>(node, "shader");
     if (modelName.has_value() && shader.has_value())
     {
-        std::cout << "Trying to load " << smrFile << " * " << *modelName << std::endl;
+        spdlog::debug("Trying to load {} * {}", smrFile, *modelName);
         auto mesh = loadMesh(smrFile, hierarchyPath / sceneNode.name, *modelName, sceneNode.scale);
         if (mesh.has_value()) {
             isMmeshLoaded = true;
@@ -222,7 +222,7 @@ std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::files
     if (!success)
         return std::nullopt;
 
-    std::cout << "Load part0" << std::endl;
+    spdlog::debug("Load part0");
     MeshPart part = info.parts[0];
     if (part.header.formatIdx == 0 || part.header.bitcode == 0 || part.header.numTextures == 0)
         return std::nullopt;
@@ -232,7 +232,7 @@ std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::files
     if (header.streamFormats[formatIndex].size == 0)
         return std::nullopt;
 
-    std::cout << "Loading vertex data" << std::endl;
+    spdlog::debug("Loading vertex data");
     StreamFormat& format = header.streamFormats[formatIndex];
     //printFormat(format);
     VertexDataHeader& data = header.dataHeader[meshEntry->dataIndex];
@@ -247,12 +247,10 @@ std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::files
     binReader.setPosition(data.posStart);
     std::vector<char> vertices = binReader.readChars(4 * format.size * patchVertices);
 
-    if (hierarchyPath.filename() == "casa_placdesucre_entrance")
-        std::cout << "test" << std::endl;
     auto mesh = parseMesh(format, vertices, part.indices);
     if (mesh.has_value()) {
-        std::cout << "Mesh parsed successfully" << std::endl;
-        std::cout << "Adding textures" << std::endl;
+        spdlog::info("Mesh {} parsed", modelName);
+        spdlog::debug("Adding textures");
         mesh->textureStagePath.resize(part.header.numTexStages);
         int vOffset = 0;
         int iOffset = 0;
