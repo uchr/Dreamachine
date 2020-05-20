@@ -10,17 +10,19 @@
 #include <QtWidgets/QApplication>
 
 #include <fstream>
+#include <cstdlib>
 
 using namespace parser;
 
 int main(int argc, char** argv) {
-    spdlog::set_level(spdlog::level::debug);
+    //spdlog::set_level(spdlog::level::debug);
 
-    const std::string bundleName = "hospital_room";
-    const std::filesystem::path pakPath = "package/" + bundleName +".pak";
+    const char* dreamfallTLJResPath = std::getenv("DreamfallTLJResPath");
+
+    const std::string bundleName = "japan_streets";
     const std::filesystem::path sceneSDRPath = "data/generated/locations/" + bundleName + ".cdr";
 
-    PAKParser::instance() = PAKParser(pakPath);
+    PAKParser::instance() = PAKParser(dreamfallTLJResPath);
 
     SharkParser sceneSDRParser(sceneSDRPath);
     SceneIndex sceneIndex = sceneSDRParser.parseScene(bundleName);

@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <vector>
+#include <unordered_map>
 
 namespace parser
 {
@@ -20,29 +21,33 @@ struct PAKFileEntry
     bool isRealFile() const;
 };
 
+struct PAKIndex
+{
+    PAKIndex() = default;
+    PAKIndex(const std::filesystem::path& path);
+
+    std::vector<PAKFileEntry> entries;
+
+    std::filesystem::path path;
+};
+
 class PAKParser
 {
 public:
     static PAKParser& instance(); // TODO: Remove
 
-    PAKParser();
-    PAKParser(std::filesystem::path path);
-    ~PAKParser();
+    PAKParser() = default;
+    PAKParser(const std::filesystem::path& path);
 
     void tryExtract(const std::filesystem::path& innerPath);
 
 private:
-    void extract(const PAKFileEntry& entry, const std::filesystem::path& outputPath) const;
+    void extract(const PAKIndex& pakIndex, const PAKFileEntry& entry, const std::filesystem::path& outputPath) const;
 
-    const PAKFileEntry* findFile(std::string innerPath) const;
-    const PAKFileEntry* findFile(std::string innerPathLeft, std::string innerPathPassed, int offset) const;
+    PAKFileEntry* findFile(PAKIndex& pakIndex, std::string innerPath) const;
+    PAKFileEntry* findFile(PAKIndex& pakIndex, std::string innerPathLeft, std::string innerPathPassed, int offset) const;
 
-    void parse();
-    size_t fileSize() const;
-
-    std::vector<PAKFileEntry> m_entries;
-
-    BinReader m_binReader;
+    std::unordered_map<std::string, PAKIndex> m_pakIndices;
 };
 
 }

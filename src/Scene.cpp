@@ -55,6 +55,11 @@ std::vector<std::filesystem::path> parseTextures(const std::vector<std::filesyst
             hr = DirectX::SaveToWICFile(*imageData.GetImage(0, 0, 0), DirectX::WIC_FLAGS_NONE, DirectX::GetWICCodec(DirectX::WIC_CODEC_PNG), widen(fileExportPath.string()).c_str());
             if (SUCCEEDED(hr))
                 exportedTexturesPath.emplace_back(fileExportPath);
+            else
+                spdlog::error("Textured {} not exported", texturesPath[i].string());
+        }
+        else {
+            spdlog::error("Textured {} not imported", texturesPath[i].string());
         }
     }
     return exportedTexturesPath;

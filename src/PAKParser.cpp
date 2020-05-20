@@ -1,4 +1,5 @@
 #include "PAKParser.h"
+#include "Utils.h"
 
 #include <spdlog/spdlog.h>
 
@@ -58,29 +59,73 @@ bool PAKFileEntry::isRealFile() const
     return size > 0;
 }
 
+PAKIndex::PAKIndex(const std::filesystem::path& path)
+    : path(path)
+{
+    BinReader binReader(path);
+    binReader.setPosition(0);
+
+    // read magic
+    const std::string magicRequirement = "tlj_pack0001";
+    const std::string magic = binReader.readString(magicRequirement.size());
+    if (magicRequirement != magic)
+        throw std::runtime_error("tljpak magic start is missing");
+
+    uint32_t fileCount = binReader.readUint32();
+    uint32_t numCount = binReader.readUint32();
+    uint32_t byteCount = binReader.readUint32();
+
+    std::vector<char> nameBlock(byteCount);
+    std::vector<int> lenBlock(numCount);
+
+    for (uint32_t i = 0; i < fileCount; ++i)
+        entries.emplace_back(binReader);
+
+    std::vector<char> byteBlock = binReader.readChars(byteCount);
+    for (uint32_t i = 0; i < byteCount; ++i)
+        nameBlock[i] = hex2char((byteBlock[i]));
+
+    for (uint32_t i = 0; i < numCount; ++i)
+        lenBlock[i] = binReader.readInt32();
+
+    for (auto& entry : entries)
+        entry.fillIn(nameBlock);
+}
+
 PAKParser& PAKParser::instance() {
     static PAKParser pakParser;
     return pakParser;
 }
 
-PAKParser::PAKParser() = default;
-
-PAKParser::PAKParser(std::filesystem::path path) 
-    : m_binReader(path)
+PAKParser::PAKParser(const std::filesystem::path& path)
 {
-    parse();
+    for(auto& childIt: std::filesystem::directory_iterator(path)) {
+        auto childPath = childIt.path();
+        if (childPath.extension().string() == ".pak")
+            m_pakIndices[Utils::getFileNameWithoutExtension(childPath)] = PAKIndex(childPath);
+    }
 }
 
-PAKParser::~PAKParser() = default;
 
 void PAKParser::tryExtract(const std::filesystem::path& path) {
     std::string innerPath = path.string();
     std::replace(innerPath.begin(), innerPath.end(), '/', '\\');
     spdlog::debug("Try to extract {}", innerPath);
 
-    const PAKFileEntry* entry = findFile(innerPath);
-    if (entry != nullptr) {
-        extract(*entry, path);
+    PAKIndex* pakIndex = nullptr;
+    PAKFileEntry* entry = nullptr;
+    for (auto& it : m_pakIndices) {
+        entry = findFile(it.second, innerPath);
+        if (entry != nullptr) {
+            if (it.first != "japan_streets")
+                spdlog::error("Not japan_streets pak: {}", it.first);
+            pakIndex = &it.second;
+            break;
+        }
+    }
+
+    if (pakIndex != nullptr && entry != nullptr) {
+        extract(*pakIndex, *entry, path);
         spdlog::debug("Extracted successfully to {}", path.string());
     }
     else
@@ -89,79 +134,49 @@ void PAKParser::tryExtract(const std::filesystem::path& path) {
     }
 }
 
-void PAKParser::extract(const PAKFileEntry& entry, const std::filesystem::path& outputPath) const {
+void PAKParser::extract(const PAKIndex& pakIndex, const PAKFileEntry& entry, const std::filesystem::path& outputPath) const {
     std::filesystem::create_directories(outputPath.parent_path());
     std::ofstream out(outputPath.string(), std::ios::binary);
     assert(out.is_open());
 
-    out.write(m_binReader.data() + entry.offset, entry.size);
+    BinReader binReader(pakIndex.path);
+    out.write(binReader.data() + entry.offset, entry.size);
 }
 
-const PAKFileEntry* PAKParser::findFile(std::string innerPath) const {
+PAKFileEntry* PAKParser::findFile(PAKIndex& pakIndex, std::string innerPath) const {
     std::transform(innerPath.begin(), innerPath.end(), innerPath.begin(),
                     [](unsigned char c) { return std::tolower(c); });
-    return findFile(innerPath, "", 0);
+
+    return findFile(pakIndex, innerPath, "", 0);
 }
 
-const PAKFileEntry* PAKParser::findFile(std::string innerPathLeft, std::string innerPathPassed, int offset) const {
+PAKFileEntry* PAKParser::findFile(PAKIndex& pakIndex, std::string innerPathLeft, std::string innerPathPassed, int offset) const {
     int num = char2hex(innerPathLeft[0]);
     if (num < 0)
         return nullptr;
 
     num += offset;
-    if (num >= m_entries.size())
+    if (num >= pakIndex.entries.size())
         return nullptr;
 
-    std::string partial = innerPathLeft[0] + m_entries[num].partialName;
+    std::string partial = innerPathLeft[0] + pakIndex.entries[num].partialName;
     if (!innerPathLeft._Starts_with(partial))
         return nullptr;
 
     innerPathPassed += partial;
     innerPathLeft = std::string(innerPathLeft.begin() + partial.size(), innerPathLeft.end());
-    if (innerPathPassed.size() != m_entries[num].hLen + 1)
+    if (innerPathPassed.size() != pakIndex.entries[num].hLen + 1)
         return nullptr;
 
-    if (m_entries[num].isRealFile())
+    if (pakIndex.entries[num].isRealFile())
     {
         if (innerPathLeft.size() != 0)
             return nullptr;
-        return &m_entries[num];
+        return &pakIndex.entries[num];
     }
     if (innerPathLeft.size() < 1)
         return nullptr;
-    return findFile(innerPathLeft, innerPathPassed, m_entries[num].hOffset);
-}
-
-void PAKParser::parse() {
-    m_entries.clear();
-
-    m_binReader.setPosition(0);
-
-    // read magic
-    const std::string magicRequirement = "tlj_pack0001";
-    const std::string magic = m_binReader.readString(magicRequirement.size());
-    if (magicRequirement != magic)
-        throw std::runtime_error("tljpak magic start is missing");
-
-    uint32_t fileCount = m_binReader.readUint32();
-    uint32_t numCount = m_binReader.readUint32();
-    uint32_t byteCount = m_binReader.readUint32();
-
-    std::vector<char> nameBlock(byteCount);
-    std::vector<int> lenBlock(numCount);
-
-    for (uint32_t i = 0; i < fileCount; ++i)
-        m_entries.emplace_back(m_binReader);
-
-    std::vector<char> byteBlock = m_binReader.readChars(byteCount);
-    for (uint32_t i = 0; i < byteCount; ++i)
-        nameBlock[i] = hex2char((byteBlock[i]));
-
-    for (uint32_t i = 0; i < numCount; ++i)
-        lenBlock[i] = m_binReader.readInt32();
-
-    for (auto& entry : m_entries)
-        entry.fillIn(nameBlock);
+    return findFile(pakIndex, innerPathLeft, innerPathPassed, pakIndex.entries[num].hOffset);
 }
 
 }
