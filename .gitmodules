@@ -1,0 +1,3 @@
+[submodule "submodules/cpp-mmf"]
+	path = submodules/cpp-mmf
+	url = https://github.com/carlomilanesi/cpp-mmf
