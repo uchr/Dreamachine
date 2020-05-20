@@ -28,39 +28,6 @@ std::vector<char> BinReader::readChars(size_t length) {
     return result;
 }
 
-std::vector<uint32_t> BinReader::readUint32Table(int length, uint32_t pos) {
-    Assert(pos);
-    std::vector<uint32_t> table(length);
-    for (int i = 0; i < length; i++)
-        table[i] = readUint32();
-    return table;
-}
-
-std::vector<int32_t> BinReader::readInt32Table(int length, uint32_t pos) {
-    Assert(pos);
-    std::vector<int32_t> table(length);
-    for (int i = 0; i < length; i++)
-        table[i] = readInt32();
-    return table;
-}
-
-std::vector<uint16_t> BinReader::readUint16Table(int length, uint32_t pos) {
-    Assert(pos);
-    std::vector<uint16_t> table(length);
-    for (int i = 0; i < length; i++)
-        table[i] = readUint16();
-    return table;
-}
-
-std::vector<float> BinReader::readFloatTable(int length, uint32_t pos)
-{
-    Assert(pos);
-    std::vector<float> table(length);
-    for (int i = 0; i < length; i++)
-        table[i] = readFloat();
-    return table;
-}
-
 int64_t BinReader::readSharkNum()
 {
     int64_t num = 0;
@@ -87,31 +54,6 @@ float BinReader::readEndianFloat()
         arr[3 - i] = readByte();
     float f = *reinterpret_cast<float*>(arr); // TODO: Check
     return f;
-}
-
-float BinReader::readFloat()
-{
-    float value = *reinterpret_cast<float*>(data() + m_pos);
-    m_pos += sizeof(float);
-    return value;
-}
-
-uint32_t BinReader::readUint32() {
-    uint32_t value = *reinterpret_cast<uint32_t*>(data() + m_pos);
-    m_pos += sizeof(uint32_t);
-    return value;
-}
-
-int32_t BinReader::readInt32() {
-    int32_t value = *reinterpret_cast<int32_t*>(data() + m_pos);
-    m_pos += sizeof(int32_t);
-    return value;
-}
-
-uint16_t BinReader::readUint16() {
-    uint16_t value = *reinterpret_cast<uint16_t*>(data() + m_pos);
-    m_pos += sizeof(uint16_t);
-    return value;
 }
 
 char BinReader::readChar() {

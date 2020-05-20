@@ -96,7 +96,7 @@ std::optional<Mesh> parseMesh(const StreamFormat& streamFormat, const std::vecto
 
     BinReaderMemory indicesReader(indicesBuffer.data(), indicesBuffer.size());
     for (size_t i = 0; i < indicesBuffer.size() / sizeof(uint16_t); ++i)
-        mesh.indices.push_back(indicesReader.readUint16());
+        mesh.indices.push_back(indicesReader.read<uint16_t>());
 
     return mesh;
 }

@@ -21,26 +21,21 @@ public:
         return value;
     }
 
+    template <typename T>
+    std::vector<T> readTable(int length, size_t pos) {
+        Assert(pos);
+        std::vector<T> table(length);
+        for (int i = 0; i < length; i++)
+            table[i] = read<T>();
+        return table;
+    }
+
     std::string readStringLine();
     std::string readString(size_t length);
     std::vector<char> readChars(size_t length);
 
-    std::vector<uint32_t> readUint32Table(int length, uint32_t pos);
-    std::vector<int32_t> readInt32Table(int length, uint32_t pos);
-
-    std::vector<uint16_t> readUint16Table(int length, uint32_t pos);
-
-    std::vector<float> readFloatTable(int length, uint32_t pos);
-
     int64_t readSharkNum();
-
     float readEndianFloat();
-    float readFloat();
-
-    uint32_t readUint32();
-    int32_t readInt32();
-
-    uint16_t readUint16();
 
     char readChar();
     byte readByte();

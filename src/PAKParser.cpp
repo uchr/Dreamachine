@@ -35,11 +35,11 @@ namespace parser
 {
 
 PAKFileEntry::PAKFileEntry(BinReader& binReader) {
-    offset = binReader.readUint32();
-    size = binReader.readInt32();
-    hOffset = binReader.readInt32();
-    hLen = binReader.readInt32();
-    hRef = binReader.readInt32();
+    offset = binReader.read<uint32_t>();
+    size = binReader.read<int32_t>();
+    hOffset = binReader.read<int32_t>();
+    hLen = binReader.read<int32_t>();
+    hRef = binReader.read<int32_t>();
     if (isRealFile())
         --hLen;
 }
@@ -70,9 +70,9 @@ PAKIndex::PAKIndex(const std::filesystem::path& path)
     if (magicRequirement != magic)
         throw std::runtime_error("tljpak magic start is missing");
 
-    uint32_t fileCount = binReader.readUint32();
-    uint32_t numCount = binReader.readUint32();
-    uint32_t byteCount = binReader.readUint32();
+    uint32_t fileCount = binReader.read<uint32_t>();
+    uint32_t numCount = binReader.read<uint32_t>();
+    uint32_t byteCount = binReader.read<uint32_t>();
 
     std::vector<char> nameBlock(byteCount);
     std::vector<int> lenBlock(numCount);
@@ -85,7 +85,7 @@ PAKIndex::PAKIndex(const std::filesystem::path& path)
         nameBlock[i] = hex2char((byteBlock[i]));
 
     for (uint32_t i = 0; i < numCount; ++i)
-        lenBlock[i] = binReader.readInt32();
+        lenBlock[i] = binReader.read<int32_t>();
 
     for (auto& entry : entries)
         entry.fillIn(nameBlock);
