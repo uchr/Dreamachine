@@ -3,19 +3,14 @@
 #include "BUNParser.h"
 #include "GeometryData.h"
 #include "PAKParser.h"
-#include "SharkNode.h"
 #include "SceneNode.h"
+#include "SharkNode.h"
 #include "SharkParser.h"
-
-#include <DirectXTex.h>
-#include <d3d11.h>
+#include "TextureParser.h"
 
 #include <spdlog/spdlog.h>
 
 #include <array>
-#include <fstream>
-#include <locale>
-#include <sstream>
 
 namespace parser
 {
@@ -30,40 +25,6 @@ const enum class ChannelType {
 const size_t entrySize[] = { 0, 8, 12, 16, 4 };
 const std::string entryName[] = { "Unused", "Float2", "Float3", "Float4", "Color" };
 const ChannelType entryType[] = { ChannelType::Unused, ChannelType::Float2, ChannelType::Float3, ChannelType::Float4, ChannelType::Color };
-
-std::wstring widen(const std::string& str)
-{
-    std::wostringstream wstm ;
-    const std::ctype<wchar_t>& ctfacet = std::use_facet<std::ctype<wchar_t>>(wstm.getloc()) ;
-    for( size_t i = 0; i < str.size(); ++i)
-        wstm << ctfacet.widen(str[i]);
-    return wstm.str() ;
-}
-
-std::vector<std::filesystem::path> parseTextures(const std::vector<std::filesystem::path>& texturesPath, const std::filesystem::path& exportPath) {
-    std::vector<std::filesystem::path> exportedTexturesPath;
-    for (int i = 0; i < texturesPath.size(); ++i) {
-        PAKParser::instance().tryExtract(texturesPath[i]);
-        DirectX::ScratchImage imageData;
-        HRESULT hr = DirectX::LoadFromWICFile(widen(texturesPath[i].string()).c_str(), DirectX::WIC_FLAGS_NONE, nullptr, imageData);
-        if (!SUCCEEDED(hr)) {
-            hr = DirectX::LoadFromDDSFile(widen(texturesPath[i].string()).c_str(), DirectX::WIC_FLAGS_NONE, nullptr, imageData);
-        }
-        if (SUCCEEDED(hr)) {
-            std::filesystem::create_directories(exportPath);
-            std::filesystem::path fileExportPath = exportPath / texturesPath[i].filename();
-            hr = DirectX::SaveToWICFile(*imageData.GetImage(0, 0, 0), DirectX::WIC_FLAGS_NONE, DirectX::GetWICCodec(DirectX::WIC_CODEC_PNG), widen(fileExportPath.string()).c_str());
-            if (SUCCEEDED(hr))
-                exportedTexturesPath.emplace_back(fileExportPath);
-            else
-                spdlog::error("Textured {} not exported", texturesPath[i].string());
-        }
-        else {
-            spdlog::error("Textured {} not imported", texturesPath[i].string());
-        }
-    }
-    return exportedTexturesPath;
-}
 
 std::optional<Mesh> parseMesh(const StreamFormat& streamFormat, const std::vector<char>& verticesBuffer, const std::vector<char>& indicesBuffer)
 {

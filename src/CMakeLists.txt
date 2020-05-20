@@ -39,6 +39,7 @@ add_executable(Dreamachine
     main.cpp
     MainWindow.cpp
     GLView.cpp
+    TextureParser.cpp
     Scene.cpp
     SceneNode.cpp
     MeshExporter.cpp

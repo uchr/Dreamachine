@@ -22,7 +22,7 @@ There is a great [DreamView](https://pingus.seul.org/~grumbel/dreamfall/), which
 [FBX SDK 2020.0.1](https://www.autodesk.com/developer-network/platform-technologies/fbx-sdk-2020-0)
 
 ```
-./vcpkg install DirectXTex corrade magnum[wglcontext,gl-info] magnum-plugins[pngimporter] fmt --triplet x64-windows
+./vcpkg install DirectXTex corrade magnum[wglcontext,gl-info] magnum-plugins[pngimporter] spdlog fmt stb --triplet x64-windows
 ```
 
 # How to build
