@@ -62,8 +62,7 @@ bool PAKFileEntry::isRealFile() const
 PAKIndex::PAKIndex(const std::filesystem::path& path)
     : path(path)
 {
-    BinReader binReader(path);
-    binReader.setPosition(0);
+    BinReaderMmap binReader(path);
 
     // read magic
     const std::string magicRequirement = "tlj_pack0001";
@@ -117,8 +116,6 @@ void PAKParser::tryExtract(const std::filesystem::path& path) {
     for (auto& it : m_pakIndices) {
         entry = findFile(it.second, innerPath);
         if (entry != nullptr) {
-            if (it.first != "japan_streets")
-                spdlog::error("Not japan_streets pak: {}", it.first);
             pakIndex = &it.second;
             break;
         }
@@ -139,8 +136,8 @@ void PAKParser::extract(const PAKIndex& pakIndex, const PAKFileEntry& entry, con
     std::ofstream out(outputPath.string(), std::ios::binary);
     assert(out.is_open());
 
-    BinReader binReader(pakIndex.path);
-    out.write(binReader.data() + entry.offset, entry.size);
+    BinReaderMmap binReader(pakIndex.path, entry.offset, entry.size);
+    out.write(binReader.data(), entry.size);
 }
 
 PAKFileEntry* PAKParser::findFile(PAKIndex& pakIndex, std::string innerPath) const {

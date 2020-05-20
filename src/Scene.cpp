@@ -83,7 +83,7 @@ std::optional<Mesh> parseMesh(const StreamFormat& streamFormat, const std::vecto
         return std::nullopt;
 
     Mesh mesh;
-    BinReader verticesReader(verticesBuffer);
+    BinReaderMemory verticesReader(verticesBuffer.data(), verticesBuffer.size());
     for (int vi = 0; vi < verticesBuffer.size() / bytePerVertex; ++vi) {
         verticesReader.setPosition(vi * bytePerVertex);
         Vector3 position = verticesReader.read<Vector3>();
@@ -94,7 +94,7 @@ std::optional<Mesh> parseMesh(const StreamFormat& streamFormat, const std::vecto
         mesh.uvs.push_back(uv);
     }
 
-    BinReader indicesReader(indicesBuffer);
+    BinReaderMemory indicesReader(indicesBuffer.data(), indicesBuffer.size());
     for (size_t i = 0; i < indicesBuffer.size() / sizeof(uint16_t); ++i)
         mesh.indices.push_back(indicesReader.readUint16());
 
@@ -208,7 +208,7 @@ std::optional<SceneNode> Scene::loadHierarchy(SharkNode* node, const std::string
 }
 
 std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::filesystem::path& hierarchyPath, const std::string& modelName, float& outScale) {
-    BinReader binReader("bundles/" + m_bundleName + ".bun");
+    BinReaderMmap binReader("bundles/" + m_bundleName + ".bun");
 
     BundleHeader& header = m_bundleHeader;
 

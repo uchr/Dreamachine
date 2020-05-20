@@ -1,5 +1,6 @@
 #include "BUNParser.h"
 #include "BinReader.h"
+#include "PAKParser.h"
 
 #include <spdlog/spdlog.h>
 
@@ -21,10 +22,11 @@ StreamFormat parseStreamFormat(BinReader& binReader) {
 BUNParser::BUNParser(std::filesystem::path path)
     : m_path(std::move(path))
 {
+    PAKParser::instance().tryExtract(m_path);
 }
 
 BundleHeader BUNParser::parseHeader() {
-    BinReader binReader(m_path);
+    BinReaderMmap binReader(m_path);
 
     spdlog::debug("Parse bun header");
     int posOrigin = binReader.readInt32() + 4;

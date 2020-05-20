@@ -70,6 +70,7 @@ target_link_libraries(Dreamachine PRIVATE
     Qt5::Widgets
     fmt::fmt
     spdlog::spdlog
+    cppmmf
     "d3d11.lib"
 )
 

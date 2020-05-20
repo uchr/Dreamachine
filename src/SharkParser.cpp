@@ -49,7 +49,7 @@ std::vector<std::string> getBpr(SharkNode* root)
 }
 
 SharkParser::SharkParser(const std::filesystem::path& path) {
-    BinReader binReader(path);
+    BinReaderMmap binReader(path);
     if (binReader.readStringLine() != magic || binReader.readStringLine() != "2x4")
         throw std::exception("shark3d binary magic wrong");
     m_root = new SharkNodeValue(readSub(binReader), "root");

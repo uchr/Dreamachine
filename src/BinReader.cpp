@@ -1,29 +1,12 @@
 #include "BinReader.h"
 #include "PAKParser.h"
 
+#include <spdlog/spdlog.h>
+
 #include <fstream>
 
 namespace parser
 {
-
-BinReader::BinReader(const std::filesystem::path& path)
-    : m_pos(0)
-{
-    std::ifstream file(path.string(), std::ios::binary);
-    if (!file.is_open())
-        PAKParser::instance().tryExtract(path);
-    file = std::ifstream(path.string(), std::ios::binary);
-    if (!file.is_open())
-        throw std::runtime_error("File '" + path.string() + "' not found");
-    m_data.resize(fileSize(path));
-    file.read(m_data.data(), m_data.size());
-}
-
-BinReader::BinReader(std::vector<char> data)
-    : m_data(std::move(data))
-    , m_pos(0)
-{
-}
 
 std::string BinReader::readStringLine() {
     std::string result;
@@ -34,13 +17,13 @@ std::string BinReader::readStringLine() {
 }
 
 std::string BinReader::readString(size_t length) {
-    std::string result(m_data.begin() + m_pos, m_data.begin() + m_pos + length);
-    m_pos += length;
+    std::vector chars = readChars(length); // TODO: Rewrite
+    std::string result(chars.begin(), chars.end());
     return result;
 }
 
 std::vector<char> BinReader::readChars(size_t length) {
-    std::vector<char> result(m_data.begin() + m_pos, m_data.begin() + m_pos + length);
+    std::vector<char> result(data() + m_pos, data() + m_pos + length);
     m_pos += length;
     return result;
 }
@@ -108,35 +91,35 @@ float BinReader::readEndianFloat()
 
 float BinReader::readFloat()
 {
-    float value = *reinterpret_cast<float*>(m_data.data() + m_pos);
+    float value = *reinterpret_cast<float*>(data() + m_pos);
     m_pos += sizeof(float);
     return value;
 }
 
 uint32_t BinReader::readUint32() {
-    uint32_t value = *reinterpret_cast<uint32_t*>(m_data.data() + m_pos);
+    uint32_t value = *reinterpret_cast<uint32_t*>(data() + m_pos);
     m_pos += sizeof(uint32_t);
     return value;
 }
 
 int32_t BinReader::readInt32() {
-    int32_t value = *reinterpret_cast<int32_t*>(m_data.data() + m_pos);
+    int32_t value = *reinterpret_cast<int32_t*>(data() + m_pos);
     m_pos += sizeof(int32_t);
     return value;
 }
 
 uint16_t BinReader::readUint16() {
-    uint16_t value = *reinterpret_cast<uint16_t*>(m_data.data() + m_pos);
+    uint16_t value = *reinterpret_cast<uint16_t*>(data() + m_pos);
     m_pos += sizeof(uint16_t);
     return value;
 }
 
 char BinReader::readChar() {
-    return m_data[m_pos++];
+    return data()[m_pos++];
 }
 
 byte BinReader::readByte() {
-    return static_cast<byte>(m_data[m_pos++]);
+    return static_cast<byte>(data()[m_pos++]);
 }
 
 size_t BinReader::getPosition() const {
@@ -181,24 +164,59 @@ void BinReader::Assert0(size_t pos)
 {
     if (pos > 0 && m_pos != pos)
         throw new std::runtime_error(std::string("m_posZero: ") + std::to_string(m_posZero) + " pos: " + std::to_string(pos));
-        //std::cerr << std::to_string(m_pos) + " != " + std::to_string(pos) << std::endl;
 }
 
 bool BinReader::isEnd() const {
-    return m_pos == m_data.size();
+    return m_pos == size();
 }
 
-const char* BinReader::data() const {
-    return m_data.data();
+BinReaderMmap::BinReaderMmap(const std::filesystem::path& path) {
+    mmf.open(path.string().c_str(), true);
+    if (!mmf.is_open())
+        spdlog::error("Can't open {}", path.string());
 }
 
-size_t BinReader::fileSize(const std::filesystem::path& path) const {
-    std::ifstream file(path.string(), std::ios::binary);
-    std::streampos begin = file.tellg();
-    file.seekg (0, std::ios::end);
-    std::streampos end = file.tellg();
-    file.close();
-    return end - begin;
+BinReaderMmap::BinReaderMmap(const std::filesystem::path& path, size_t offset, size_t size) {
+    mmf.open(path.string().c_str(), false);
+    mmf.map(offset, size);
+    if (!mmf.is_open())
+        spdlog::error("Can't open {}", path.string());
+}
+
+const char* BinReaderMmap::data() const {
+    return mmf.data();
+}
+
+char* BinReaderMmap::data() {
+    return const_cast<char*>(mmf.data());
+}
+
+size_t BinReaderMmap::size() const {
+    return mmf.mapped_size();
+}
+
+bool BinReaderMmap::isOpen() const {
+    return mmf.is_open();
+}
+
+BinReaderMemory::BinReaderMemory(const char* data, size_t size)
+    : m_data(data)
+    , m_size(size)
+{
+    assert(data != nullptr);
+    assert(size > 0);
+}
+
+const char* BinReaderMemory::data() const {
+    return m_data;
+}
+
+char* BinReaderMemory::data() {
+    return const_cast<char*>(m_data);
+}
+
+size_t BinReaderMemory::size() const {
+    return m_size;
 }
 
 }

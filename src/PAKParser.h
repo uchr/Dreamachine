@@ -11,7 +11,7 @@ namespace parser
 
 struct PAKFileEntry
 {
-    uint32_t offset, oldOffset;
+    uint32_t offset;
     int32_t size;
     int32_t hOffset, hLen, hRef;
     std::string partialName = "";
