@@ -52,7 +52,7 @@ std::optional<Mesh> parseMesh(const StreamFormat& streamFormat, const std::vecto
         Vector2 uv = verticesReader.read<Vector2>();
         mesh.vertices.push_back(position);
         mesh.normals.push_back(normal);
-        mesh.uvs.push_back(uv);
+        mesh.uvs.push_back(Vector2{uv.x, 1.0f - uv.y});
     }
 
     BinReaderMemory indicesReader(indicesBuffer.data(), indicesBuffer.size());
