@@ -7,18 +7,10 @@
 
 void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const parser::SceneNode& node)
 {
-    auto createMaterial = [&](const parser::Mesh& mesh, int stage) {
-        FbxString materialName = Utils::getFileNameWithoutExtension(mesh.textureStagePath[stage][0]).c_str();
+    auto createTexture = [&](const std::filesystem::path& path) {
+        FbxFileTexture* texture = FbxFileTexture::Create(manager, path.string().c_str());
 
-        // Create material
-        FbxString shadingName = "Phong";
-        FbxSurfacePhong* material = FbxSurfacePhong::Create(manager, materialName.Buffer());
-        material->Ambient.Set(FbxDouble3(0.8, 0.8, 0.8));
-
-        // Create texture
-        std::filesystem::path texturePath = mesh.textureStagePath[stage][0];
-        FbxFileTexture* texture = FbxFileTexture::Create(manager, texturePath.string().c_str());
-        texture->SetFileName(texturePath.string().c_str());
+        texture->SetFileName(path.string().c_str());
         texture->SetTextureUse(FbxTexture::eStandard);
         texture->SetMappingType(FbxTexture::eUV);
         texture->SetMaterialUse(FbxFileTexture::eModelMaterial);
@@ -27,7 +19,32 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
         texture->SetScale(1.0, 1.0);
         texture->SetRotation(0.0, 0.0);
         texture->UVSet.Set(FbxString("DiffuseUV"));
-        material->Diffuse.ConnectSrcObject(texture);
+
+        return texture;
+    };
+
+    auto createMaterial = [&](const parser::Mesh& mesh, int stage) {
+        FbxString materialName = Utils::getFileNameWithoutExtension(mesh.textureStagePath[stage][0]).c_str();
+
+        // Create material
+        FbxString shadingName = "Phong";
+        FbxSurfacePhong* material = FbxSurfacePhong::Create(manager, materialName.Buffer());
+        material->Ambient.Set(FbxDouble3(0.8, 0.8, 0.8));
+
+        const auto& diffuseTexturePath = mesh.textureStagePath[stage][0];
+        material->Diffuse.ConnectSrcObject(createTexture(diffuseTexturePath));
+
+        auto normalMapIt = std::find_if(mesh.textureStagePath[stage].begin(), mesh.textureStagePath[stage].end(),
+            [](const std::filesystem::path& path) { return path.string().find("nml") != std::string::npos; } );
+        if (normalMapIt != mesh.textureStagePath[stage].end())
+            material->NormalMap.ConnectSrcObject(createTexture(*normalMapIt));
+
+        auto heightMapIt = std::find_if(mesh.textureStagePath[stage].begin(), mesh.textureStagePath[stage].end(),
+            [](const std::filesystem::path& path) { return path.string().find("hmap") != std::string::npos; } );
+        if (heightMapIt != mesh.textureStagePath[stage].end()) {
+            material->Bump.ConnectSrcObject(createTexture(*heightMapIt));
+            material->BumpFactor.Set(1.0);
+        }
 
         return material;
     };
