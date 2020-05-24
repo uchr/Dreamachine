@@ -40,19 +40,55 @@ std::optional<Mesh> parseMesh(const StreamFormat& streamFormat, const std::vecto
         }
     }
 
-    if (!(channelTypes[0] == ChannelType::Float3 && channelTypes[1] == ChannelType::Float3 && channelTypes[2] == ChannelType::Float2))
-        return std::nullopt;
-
     Mesh mesh;
-    BinReaderMemory verticesReader(verticesBuffer.data(), verticesBuffer.size());
-    for (int vi = 0; vi < verticesBuffer.size() / bytePerVertex; ++vi) {
-        verticesReader.setPosition(vi * bytePerVertex);
-        Vector3 position = verticesReader.read<Vector3>();
-        Vector3 normal = verticesReader.read<Vector3>();
-        Vector2 uv = verticesReader.read<Vector2>();
-        mesh.vertices.push_back(position);
-        mesh.normals.push_back(normal);
-        mesh.uvs.push_back(Vector2{uv.x, 1.0f - uv.y});
+    if (channelTypes[0] == ChannelType::Float3 && channelTypes[1] == ChannelType::Float3 && channelTypes[2] == ChannelType::Float2) {
+        BinReaderMemory verticesReader(verticesBuffer.data(), verticesBuffer.size());
+        for (int vi = 0; vi < verticesBuffer.size() / bytePerVertex; ++vi) {
+            verticesReader.setPosition(vi * bytePerVertex);
+            Vector3 position = verticesReader.read<Vector3>();
+            Vector3 normal = verticesReader.read<Vector3>();
+            Vector2 uv = verticesReader.read<Vector2>();
+            mesh.vertices.push_back(position);
+            mesh.normals.push_back(normal);
+            mesh.uvs.push_back(Vector2{uv.x, 1.0f - uv.y});
+        }
+    }
+    else if (channelTypes[0] == ChannelType::Float3 && channelTypes[1] == ChannelType::Float3 && channelTypes[2] == ChannelType::Color &&  channelTypes[3] == ChannelType::Float2) {
+       BinReaderMemory verticesReader(verticesBuffer.data(), verticesBuffer.size());
+       for (int vi = 0; vi < verticesBuffer.size() / bytePerVertex; ++vi) {
+           verticesReader.setPosition(vi * bytePerVertex);
+           Vector3 position = verticesReader.read<Vector3>();
+           Vector3 normal = verticesReader.read<Vector3>();
+           int32_t color = verticesReader.read<int32_t>();
+           Vector2 uv = verticesReader.read<Vector2>();
+           mesh.vertices.push_back(position);
+           mesh.normals.push_back(normal);
+           mesh.uvs.push_back(Vector2{uv.x, 1.0f - uv.y});
+       }
+    }
+    else if (channelTypes[0] == ChannelType::Float3 && channelTypes[1] == ChannelType::Float2) {
+        BinReaderMemory verticesReader(verticesBuffer.data(), verticesBuffer.size());
+        for (int vi = 0; vi < verticesBuffer.size() / bytePerVertex; ++vi) {
+            verticesReader.setPosition(vi * bytePerVertex);
+            Vector3 position = verticesReader.read<Vector3>();
+            Vector2 uv = verticesReader.read<Vector2>();
+            mesh.vertices.push_back(position);
+            mesh.uvs.push_back(Vector2{uv.x, 1.0f - uv.y});
+        }
+    }
+    else if (channelTypes[0] == ChannelType::Float3 && channelTypes[1] == ChannelType::Color && channelTypes[2] == ChannelType::Float2) {
+        BinReaderMemory verticesReader(verticesBuffer.data(), verticesBuffer.size());
+        for (int vi = 0; vi < verticesBuffer.size() / bytePerVertex; ++vi) {
+            verticesReader.setPosition(vi * bytePerVertex);
+            Vector3 position = verticesReader.read<Vector3>();
+            int32_t color = verticesReader.read<int32_t>();
+            Vector2 uv = verticesReader.read<Vector2>();
+            mesh.vertices.push_back(position);
+            mesh.uvs.push_back(Vector2{uv.x, 1.0f - uv.y});
+        }
+    }
+    else {
+        return std::nullopt;
     }
 
     BinReaderMemory indicesReader(indicesBuffer.data(), indicesBuffer.size());

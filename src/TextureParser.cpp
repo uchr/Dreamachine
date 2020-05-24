@@ -204,6 +204,9 @@ bool loadNML(const std::filesystem::path& path, const std::filesystem::path& exp
 std::vector<std::filesystem::path> parseTextures(const std::vector<std::filesystem::path>& texturesPath, const std::filesystem::path& exportPath) {
     std::vector<std::filesystem::path> exportedTexturesPath;
     for (int i = 0; i < texturesPath.size(); ++i) {
+        if (texturesPath[i] == "")
+            continue;
+
         PAKParser::instance().tryExtract(texturesPath[i]);
 
         bool loaded = false;

@@ -102,12 +102,12 @@ Trade::MeshData3D createMeshData(const parser::SceneNode& node)
         positions[0].emplace_back(v.x, v.y, v.z);
     }
 
-    for (size_t i = 0; i < mesh.vertices.size(); ++i) {
+    for (size_t i = 0; i < mesh.normals.size(); ++i) {
         const auto& n = mesh.normals[i];
         normals[0].emplace_back(n.x, n.y, n.z);
     }
 
-    for (size_t i = 0; i < mesh.vertices.size(); ++i) {
+    for (size_t i = 0; i < mesh.uvs.size(); ++i) {
         const auto& uv = mesh.uvs[i];
         textureCoords2D[0].emplace_back(uv.x, uv.y);
     }

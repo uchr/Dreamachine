@@ -63,21 +63,33 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
         fbxMesh->InitControlPoints(mesh.vertices.size());
         FbxVector4* controlPoints = fbxMesh->GetControlPoints();
 
-        FbxLayerElementNormal* layerNormal = FbxLayerElementNormal::Create(fbxMesh, "");
-        layerNormal->SetMappingMode(FbxLayerElement::eByControlPoint);
-        layerNormal->SetReferenceMode(FbxLayerElement::eDirect);
-
-        FbxLayerElementUV* layerTexcoord = FbxLayerElementUV::Create(fbxMesh, "DiffuseUV");
-        layerTexcoord->SetMappingMode(FbxLayerElement::eByControlPoint);
-        layerTexcoord->SetReferenceMode(FbxLayerElement::eDirect);
-
         for (size_t i = 0; i < mesh.vertices.size(); i++) {
             const parser::Vector3& v = mesh.vertices[i];
-            const parser::Vector3& n = mesh.normals[i];
-            const parser::Vector2& uv = mesh.uvs[i];
             controlPoints[i] = FbxVector4(v.x, v.y, v.z);
-            layerNormal->GetDirectArray().Add(FbxVector4(n.x, n.y, n.z));
-            layerTexcoord->GetDirectArray().Add(FbxVector2(uv.x, uv.y));
+        }
+
+        FbxLayerElementNormal* layerNormal = nullptr;
+        if (!mesh.normals.empty()) {
+            layerNormal = FbxLayerElementNormal::Create(fbxMesh, "");
+            layerNormal->SetMappingMode(FbxLayerElement::eByControlPoint);
+            layerNormal->SetReferenceMode(FbxLayerElement::eDirect);
+
+            for (size_t i = 0; i < mesh.normals.size(); i++) {
+                const parser::Vector3& n = mesh.normals[i];
+                layerNormal->GetDirectArray().Add(FbxVector4(n.x, n.y, n.z));
+            }
+        }
+
+        FbxLayerElementUV* layerTexcoord = nullptr;
+        if (!mesh.uvs.empty()) {
+            layerTexcoord = FbxLayerElementUV::Create(fbxMesh, "DiffuseUV");
+            layerTexcoord->SetMappingMode(FbxLayerElement::eByControlPoint);
+            layerTexcoord->SetReferenceMode(FbxLayerElement::eDirect);
+
+            for (size_t i = 0; i < mesh.uvs.size(); i++) {
+                const parser::Vector2& uv = mesh.uvs[i];
+                layerTexcoord->GetDirectArray().Add(FbxVector2(uv.x, uv.y));
+            }
         }
 
         for (size_t stageIndex = 0; stageIndex < mesh.indicesStage.size(); ++stageIndex) {
@@ -87,15 +99,18 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
                 layer = fbxMesh->GetLayer(stageIndex);
             }
 
-            // Setup layers
-            layer->SetNormals(layerNormal);
-            layer->SetUVs(layerTexcoord, FbxLayerElement::eTextureDiffuse);
+            if (layerNormal != nullptr)
+                layer->SetNormals(layerNormal);
 
-            fbxMeshNode->AddMaterial(createMaterial(mesh, stageIndex));
-            FbxLayerElementMaterial* layerMaterial = FbxLayerElementMaterial::Create(fbxMesh, "");
-            layerMaterial->SetMappingMode(FbxLayerElement::eByPolygon);
-            layerMaterial->SetReferenceMode(FbxLayerElement::eIndexToDirect);
-            layer->SetMaterials(layerMaterial);
+            if (layerTexcoord != nullptr) {
+                layer->SetUVs(layerTexcoord, FbxLayerElement::eTextureDiffuse);
+
+                fbxMeshNode->AddMaterial(createMaterial(mesh, stageIndex));
+                FbxLayerElementMaterial* layerMaterial = FbxLayerElementMaterial::Create(fbxMesh, "");
+                layerMaterial->SetMappingMode(FbxLayerElement::eByPolygon);
+                layerMaterial->SetReferenceMode(FbxLayerElement::eIndexToDirect);
+                layer->SetMaterials(layerMaterial);
+            }
 
             // Create polygons
             for (size_t ti = mesh.indicesStage[stageIndex].first; ti < mesh.indicesStage[stageIndex].second;)
