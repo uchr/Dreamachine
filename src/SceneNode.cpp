@@ -44,7 +44,7 @@ void numberOfMeshes(const parser::SceneNode& node, size_t& number)
 void print(const parser::SceneNode& node, std::string offset)
 {
     bool hasMesh = node.mesh.has_value();
-    bool hasTexture = node.mesh.has_value() && !node.mesh->textureStagePath[0].empty();
+    bool hasTexture = node.mesh.has_value() && !node.mesh->meshParts[0].textures[0].empty();
     fmt::print("{}{} {}{}\n", offset, node.name, hasMesh ? "(m)" : "", hasTexture ? "(t)" : "");
 
     if (!node.children.empty()) {

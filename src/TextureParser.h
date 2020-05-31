@@ -6,6 +6,8 @@
 namespace parser
 {
 
-std::vector<std::filesystem::path> parseTextures(const std::vector<std::filesystem::path>& texturesPath, const std::filesystem::path& exportPath);
+struct MeshPart;
+
+void parseTextures(MeshPart& meshPart, const std::vector<std::filesystem::path>& texturesPath, const std::filesystem::path& exportPath);
 
 } // namespace parser

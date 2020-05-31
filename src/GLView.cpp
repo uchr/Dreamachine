@@ -278,7 +278,7 @@ void GLView::setupScene(const parser::SceneNode& node, Object3D& parent, size_t&
         PluginManager::Manager<Trade::AbstractImporter> manager;
         Containers::Pointer<Trade::AbstractImporter> importer = manager.loadAndInstantiate("PngImporter");
         assert(importer);
-        importer->openFile(mesh.textureStagePath[0][0].string());
+        importer->openFile(mesh.meshParts[0].textures[0].string());
         assert(importer->isOpened());
 
         Containers::Optional<Trade::ImageData2D> imageData = importer->image2D(0);

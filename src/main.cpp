@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     mw.resize(1366, 768);
     mw.show();
 
-    for (const auto& sir : sceneIndex.sirs) { // the_gym: 4, 8
+    for (const auto& sir : sceneIndex.sirs) {
         Scene scene(sir, bundleName);
 
         if (scene.sceneRoot.has_value())

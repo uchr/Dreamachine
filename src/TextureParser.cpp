@@ -1,9 +1,13 @@
 #include "TextureParser.h"
+#include "GeometryData.h"
 #include "BinReader.h"
 #include "PAKParser.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
+#define STBI_ONLY_PNG
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 #include <Magnum/Magnum.h>
 #include <Magnum/Math/Vector3.h>
@@ -16,9 +20,73 @@
 #include <queue>
 #include <locale>
 #include <sstream>
+#include <optional>
 
 namespace parser
 {
+namespace
+{
+
+std::filesystem::path createAlphaTexture(const std::filesystem::path& texturePath, const std::filesystem::path& outputPath) {
+    int x, y, component;
+    unsigned char *data = stbi_load(texturePath.string().c_str(), &x, &y, &component, 0);
+    for (int i = 0; i < x * y; ++i) {
+        data[i * 4 + 0] = data[i * 4 + 3];
+        data[i * 4 + 1] = data[i * 4 + 3];
+        data[i * 4 + 2] = data[i * 4 + 3];
+        data[i * 4 + 3] = 255;
+    }
+
+    stbi_write_png(outputPath.string().c_str(), x, y, component, data, 0);
+    stbi_image_free(data);
+
+    return outputPath;
+}
+
+// This is a workaround because almost any texture has an alpha channel, but not every material should be transparent.
+std::optional<std::filesystem::path> exportAlphaTexture(const std::filesystem::path& path) {
+    auto isPathContainSubstring = [&](const std::vector<std::string>& substrings) {
+        auto substringIt = std::find_if(substrings.begin(), substrings.end(),
+            [&](const std::string& substring) { return path.filename().string().find(substring) != std::string::npos; });
+        return substringIt != substrings.end();
+    };
+
+    auto getAlphaTexturePath = [](const std::filesystem::path& diffuseTexturePath) {
+        return diffuseTexturePath.parent_path() / (diffuseTexturePath.filename().replace_extension("").string() + "_alpha.png");
+    };
+
+    const std::vector<std::string> diffuseTransparentTextures = {
+        "glow",
+        "win_big",
+        "japan_streets_background",
+        "sun",
+        "branches_winter",
+        "jiva_corridor_glass"
+    };
+
+    const std::vector<std::string> nmlTransparentTextures = {
+        "plant_ivy",
+        "leaf",
+        "jdr_flowers",
+        "puddles"
+    };
+
+    if (isPathContainSubstring(diffuseTransparentTextures)) {
+        std::filesystem::path alphaOutputPath = getAlphaTexturePath(path);
+        createAlphaTexture(path, alphaOutputPath);
+        return alphaOutputPath;
+    }
+    
+    if (isPathContainSubstring(nmlTransparentTextures) && path.string().find("nml") != std::string::npos) {
+        std::string filename = path.filename().string();
+        filename.replace(filename.begin() + filename.find("_nml"), filename.end(), "");
+        std::filesystem::path alphaOutputPath = getAlphaTexturePath(path.parent_path() / filename);
+        createAlphaTexture(path, alphaOutputPath);
+        return alphaOutputPath;
+    }
+
+    return std::nullopt;
+}
 
 std::wstring widen(const std::string& str)
 {
@@ -200,8 +268,9 @@ bool loadNML(const std::filesystem::path& path, const std::filesystem::path& exp
 
     return false;
 }
+}
 
-std::vector<std::filesystem::path> parseTextures(const std::vector<std::filesystem::path>& texturesPath, const std::filesystem::path& exportPath) {
+void parseTextures(MeshPart& meshPart, const std::vector<std::filesystem::path>& texturesPath, const std::filesystem::path& exportPath) {
     std::vector<std::filesystem::path> exportedTexturesPath;
     for (int i = 0; i < texturesPath.size(); ++i) {
         if (texturesPath[i] == "")
@@ -212,28 +281,33 @@ std::vector<std::filesystem::path> parseTextures(const std::vector<std::filesyst
         bool loaded = false;
 
         std::filesystem::create_directories(exportPath);
-        std::filesystem::path fileExportPath = exportPath / texturesPath[i].filename();
+        std::filesystem::path exportedPath = exportPath / texturesPath[i].filename();
 
         DirectX::ScratchImage imageData;
         HRESULT hr = DirectX::LoadFromWICFile(widen(texturesPath[i].string()).c_str(), DirectX::WIC_FLAGS_NONE, nullptr, imageData);
         if (!SUCCEEDED(hr))
-            hr = DirectX::LoadFromDDSFile(widen(texturesPath[i].string()).c_str(), DirectX::WIC_FLAGS_NONE, nullptr, imageData);
+            hr = DirectX::LoadFromDDSFile(widen(texturesPath[i].string()).c_str(), DirectX::DDS_FLAGS_NO_LEGACY_EXPANSION, nullptr, imageData);
 
         if (SUCCEEDED(hr)) {
             loaded = true;
-            hr = DirectX::SaveToWICFile(*imageData.GetImage(0, 0, 0), DirectX::WIC_FLAGS_NONE, DirectX::GetWICCodec(DirectX::WIC_CODEC_PNG), widen(fileExportPath.string()).c_str());
+            hr = DirectX::SaveToWICFile(*imageData.GetImage(0, 0, 0), DirectX::WIC_FLAGS_NONE, DirectX::GetWICCodec(DirectX::WIC_CODEC_PNG), widen(exportedPath.string()).c_str());
         }
 
         if (!loaded)
-            loaded = loadNML(texturesPath[i], fileExportPath);
+            loaded = loadNML(texturesPath[i], exportedPath);
 
-        if (loaded)
-            exportedTexturesPath.emplace_back(fileExportPath);
-        else
+        if (loaded) {
+            exportedTexturesPath.emplace_back(exportedPath);
+            auto alphaTexture = exportAlphaTexture(exportedPath);
+            if (alphaTexture.has_value())
+                meshPart.alphaTexture = alphaTexture;
+        }
+        else {
             spdlog::error("Textured {} not exported", texturesPath[i].string());
+        }
     }
 
-    return exportedTexturesPath;
+    meshPart.textures = exportedTexturesPath;
 }
 
 }

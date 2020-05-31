@@ -1,4 +1,5 @@
 #include "MeshExporter.h"
+#include "TextureParser.h"
 #include "SceneNode.h"
 #include "Utils.h"
 
@@ -23,25 +24,29 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
         return texture;
     };
 
-    auto createMaterial = [&](const parser::Mesh& mesh, int stage) {
-        FbxString materialName = Utils::getFileNameWithoutExtension(mesh.textureStagePath[stage][0]).c_str();
+    auto createMaterial = [&](const parser::MeshPart& meshPart) {
+        FbxString materialName = Utils::getFileNameWithoutExtension(meshPart.textures[0]).c_str();
 
         // Create material
         FbxString shadingName = "Phong";
         FbxSurfacePhong* material = FbxSurfacePhong::Create(manager, materialName.Buffer());
         material->Ambient.Set(FbxDouble3(0.8, 0.8, 0.8));
 
-        const auto& diffuseTexturePath = mesh.textureStagePath[stage][0];
-        material->Diffuse.ConnectSrcObject(createTexture(diffuseTexturePath));
+        const auto& diffuseTexturePath = meshPart.textures[0];
+        FbxFileTexture* diffuseTexture = createTexture(diffuseTexturePath);
+        material->Diffuse.ConnectSrcObject(diffuseTexture);
 
-        auto normalMapIt = std::find_if(mesh.textureStagePath[stage].begin(), mesh.textureStagePath[stage].end(),
+        if (meshPart.alphaTexture.has_value())
+            material->TransparentColor.ConnectSrcObject(createTexture(meshPart.alphaTexture.value()));
+
+        auto normalMapIt = std::find_if(meshPart.textures.begin(), meshPart.textures.end(),
             [](const std::filesystem::path& path) { return path.string().find("nml") != std::string::npos; } );
-        if (normalMapIt != mesh.textureStagePath[stage].end())
+        if (normalMapIt != meshPart.textures.end())
             material->NormalMap.ConnectSrcObject(createTexture(*normalMapIt));
 
-        auto heightMapIt = std::find_if(mesh.textureStagePath[stage].begin(), mesh.textureStagePath[stage].end(),
+        auto heightMapIt = std::find_if(meshPart.textures.begin(), meshPart.textures.end(),
             [](const std::filesystem::path& path) { return path.string().find("hmap") != std::string::npos; } );
-        if (heightMapIt != mesh.textureStagePath[stage].end()) {
+        if (heightMapIt != meshPart.textures.end()) {
             material->Bump.ConnectSrcObject(createTexture(*heightMapIt));
             material->BumpFactor.Set(1.0);
         }
@@ -52,12 +57,13 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
     FbxNode* fbxMeshNode = FbxNode::Create(manager, node.name.c_str());
     parent->AddChild(fbxMeshNode);
 
+    const double rad2Deg = 57.2958;
     parser::Transofrmation transformation = node.computeTransformation();
     fbxMeshNode->LclTranslation.Set(FbxVector4(transformation.translation.x, transformation.translation.y, transformation.translation.z));
-    fbxMeshNode->LclRotation.Set(FbxVector4(transformation.rotation.x * 57.2958, transformation.rotation.y * 57.2958, transformation.rotation.z * 57.2958));
+    fbxMeshNode->LclRotation.Set(FbxVector4(transformation.rotation.x * rad2Deg, transformation.rotation.y * rad2Deg, transformation.rotation.z * rad2Deg));
     fbxMeshNode->LclScaling.Set(FbxVector4(transformation.scale, transformation.scale, transformation.scale));
 
-    if (node.mesh.has_value() && !node.mesh->textureStagePath.empty() && !node.mesh->textureStagePath[0].empty()) {
+    if (node.mesh.has_value() && !node.mesh->meshParts.empty() && !node.mesh->meshParts[0].textures.empty()) {
         const auto& mesh = *node.mesh;
         FbxMesh* fbxMesh = FbxMesh::Create(manager, node.name.c_str());
         fbxMesh->InitControlPoints(mesh.vertices.size());
@@ -92,11 +98,12 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
             }
         }
 
-        for (size_t stageIndex = 0; stageIndex < mesh.indicesStage.size(); ++stageIndex) {
-            FbxLayer* layer = fbxMesh->GetLayer(stageIndex);
+        for (size_t partIndex = 0; partIndex < mesh.meshParts.size(); ++partIndex) {
+            const auto& meshPart = mesh.meshParts[partIndex];
+            FbxLayer* layer = fbxMesh->GetLayer(partIndex);
             if (!layer) {
                 fbxMesh->CreateLayer();
-                layer = fbxMesh->GetLayer(stageIndex);
+                layer = fbxMesh->GetLayer(partIndex);
             }
 
             if (layerNormal != nullptr)
@@ -105,7 +112,7 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
             if (layerTexcoord != nullptr) {
                 layer->SetUVs(layerTexcoord, FbxLayerElement::eTextureDiffuse);
 
-                fbxMeshNode->AddMaterial(createMaterial(mesh, stageIndex));
+                fbxMeshNode->AddMaterial(createMaterial(meshPart));
                 FbxLayerElementMaterial* layerMaterial = FbxLayerElementMaterial::Create(fbxMesh, "");
                 layerMaterial->SetMappingMode(FbxLayerElement::eByPolygon);
                 layerMaterial->SetReferenceMode(FbxLayerElement::eIndexToDirect);
@@ -113,7 +120,7 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
             }
 
             // Create polygons
-            for (size_t ti = mesh.indicesStage[stageIndex].first; ti < mesh.indicesStage[stageIndex].second;)
+            for (size_t ti = meshPart.indexInterval.first; ti < meshPart.indexInterval.second;)
             {
                 fbxMesh->BeginPolygon(fbxMeshNode->GetMaterialCount() - 1);
 

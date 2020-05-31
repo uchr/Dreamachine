@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include <optional>
 
 namespace parser
 {
@@ -20,15 +21,20 @@ struct Quaternion
     float x, y, z, w;
 };
 
+struct MeshPart {
+    std::pair<int, int> indexInterval;
+    std::pair<int, int> vertexInterval;
+    std::vector<std::filesystem::path> textures;
+    std::optional<std::filesystem::path> alphaTexture;
+};
+
 struct Mesh
 {
     std::vector<Vector3> vertices;
     std::vector<Vector3> normals;
     std::vector<Vector2> uvs;
     std::vector<int> indices; // TODO: uint16_t
-    std::vector<std::vector<std::filesystem::path>> textureStagePath;
-    std::vector<std::pair<int, int>> indicesStage;
-    std::vector<std::pair<int, int>> verticesStage;
+    std::vector<MeshPart> meshParts;
 };
 
 }

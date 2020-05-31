@@ -50,14 +50,14 @@ bool PartHeader::load(BinReader& binReader) {
     return true;
 }
 
-bool PartTex::load(BinReader& binReader, int numTexStages) {
+bool PartTexInfo::load(BinReader& binReader, int numTexStages) {
     cf1 = binReader.read<uint32_t>(); cf2 = binReader.read<uint32_t>();
     posTex = binReader.read<uint32_t>(); unknown = binReader.read<int32_t>();
     texIdx = binReader.readTable<int32_t>(numTexStages, posTex);
     return true;
 }
 
-bool MeshPart::load(BinReader& binReader) {
+bool MeshPartInfo::load(BinReader& binReader) {
     header.load(binReader);
     posTextures = binReader.readTable<uint32_t>(header.numTextures, 0);
     magic = binReader.readTable<uint32_t>(header.numMagic, header.posMagic);

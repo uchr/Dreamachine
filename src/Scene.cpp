@@ -225,7 +225,7 @@ std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::files
         return std::nullopt;
 
     spdlog::debug("Load part0");
-    MeshPart part = info.parts[0];
+    MeshPartInfo part = info.parts[0];
     if (part.header.formatIdx == 0 || part.header.bitcode == 0 || part.header.numTextures == 0)
         return std::nullopt;
 
@@ -253,7 +253,7 @@ std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::files
     if (mesh.has_value()) {
         spdlog::info("Mesh {} parsed", modelName);
         spdlog::debug("Adding textures");
-        mesh->textureStagePath.resize(part.header.numTexStages);
+        mesh->meshParts.resize(part.header.numTexStages);
         int vOffset = 0;
         int iOffset = 0;
         for (int i = 0; i < part.header.numTexStages; ++i)
@@ -264,9 +264,10 @@ std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::files
                 texturePath[l] = (part.tex[l].texIdx[i] == -1) ? "" : header.textures[info.texIdx[part.tex[l].texIdx[i]]];
             }
             std::filesystem::path exportPath = std::filesystem::path("meshes") / m_bundleName / hierarchyPath;
-            mesh->textureStagePath[i] = parseTextures(texturePath, exportPath);
-            mesh->verticesStage.emplace_back(vOffset, vOffset + part.stageVertices[i]);
-            mesh->indicesStage.emplace_back(iOffset, iOffset + part.stageIndices[i]);
+            parseTextures(mesh->meshParts[i], texturePath, exportPath);
+
+            mesh->meshParts[i].vertexInterval = std::pair(vOffset, vOffset + part.stageVertices[i]);
+            mesh->meshParts[i].indexInterval = std::pair(iOffset, iOffset + part.stageIndices[i]);
             vOffset += part.stageVertices[i];
             iOffset += part.stageIndices[i];
         }

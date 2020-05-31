@@ -58,7 +58,7 @@ struct PartHeader
     bool load(BinReader& binReader);
 };
 
-struct PartTex
+struct PartTexInfo
 {
     uint32_t cf1, cf2;
     uint32_t posTex;
@@ -68,7 +68,7 @@ struct PartTex
     bool load(BinReader& binReader, int numTexStages);
 };
 
-struct MeshPart
+struct MeshPartInfo
 {
     PartHeader header;
     std::vector<uint32_t> posTextures;
@@ -84,7 +84,7 @@ struct MeshPart
     std::vector<float> animKeys;
     std::vector<uint32_t> bonus1, bonus2;
     std::vector<uint32_t> idxBonus;
-    std::vector<PartTex> tex;
+    std::vector<PartTexInfo> tex;
 
     bool load(BinReader& binReader);
 };
@@ -116,7 +116,7 @@ struct MeshInfo
     std::vector<std::string> boneNames;
     std::vector<float> boneData;
     std::vector<int32_t> texIdx;
-    std::vector<MeshPart> parts;
+    std::vector<MeshPartInfo> parts;
 
     bool load(BinReader& binReader);
 };
