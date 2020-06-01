@@ -35,6 +35,7 @@ struct Mesh
     std::vector<Vector2> uvs;
     std::vector<int> indices; // TODO: uint16_t
     std::vector<MeshPart> meshParts;
+    bool smoothness = false;
 };
 
 }

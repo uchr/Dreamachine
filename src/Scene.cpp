@@ -251,14 +251,14 @@ std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::files
 
     auto mesh = parseMesh(format, vertices, part.indices);
     if (mesh.has_value()) {
-        spdlog::info("Mesh {} parsed", modelName);
-        spdlog::debug("Adding textures");
+        if (modelName.find("skydome") != std::string::npos)
+            mesh->smoothness = true;
+
         mesh->meshParts.resize(part.header.numTexStages);
         int vOffset = 0;
         int iOffset = 0;
         for (int i = 0; i < part.header.numTexStages; ++i)
         {
-            //fmt::print("v {} + {} : {}\ni {} + {} : {}\n", vOffset, part.stageVertices[i], mesh->vertices.size(), iOffset, part.stageIndices[i], mesh->indices.size(), mesh->indices.size());
             std::vector<std::filesystem::path> texturePath(part.header.numTextures);
             for (int l = 0; l < part.header.numTextures; ++l) {
                 texturePath[l] = (part.tex[l].texIdx[i] == -1) ? "" : header.textures[info.texIdx[part.tex[l].texIdx[i]]];

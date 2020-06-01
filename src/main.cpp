@@ -40,6 +40,9 @@ int main(int argc, char** argv) {
     mw.show();
 
     for (const auto& sir : sceneIndex.sirs) {
+        if (sir.filename.find("anim") == 0)
+            continue;
+
         Scene scene(sir, bundleName);
 
         if (scene.sceneRoot.has_value())

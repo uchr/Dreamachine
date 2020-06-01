@@ -86,6 +86,17 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
             }
         }
 
+        FbxGeometryElementSmoothing* smoothingElement = nullptr;
+        if (mesh.smoothness) {
+            smoothingElement = FbxGeometryElementSmoothing::Create(fbxMesh, "");
+            smoothingElement->SetMappingMode(FbxLayerElement::eByPolygon);
+            smoothingElement->SetReferenceMode(FbxLayerElement::eDirect);
+
+            for (size_t i = 0; i < mesh.indices.size() / 3; i++) {
+                smoothingElement->GetDirectArray().Add(true);
+            }
+        }
+
         FbxLayerElementUV* layerTexcoord = nullptr;
         if (!mesh.uvs.empty()) {
             layerTexcoord = FbxLayerElementUV::Create(fbxMesh, "DiffuseUV");
@@ -108,6 +119,9 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
 
             if (layerNormal != nullptr)
                 layer->SetNormals(layerNormal);
+
+            if (smoothingElement != nullptr)
+                layer->SetSmoothing(smoothingElement);
 
             if (layerTexcoord != nullptr) {
                 layer->SetUVs(layerTexcoord, FbxLayerElement::eTextureDiffuse);

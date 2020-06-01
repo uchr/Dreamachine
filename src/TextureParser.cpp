@@ -61,14 +61,16 @@ std::optional<std::filesystem::path> exportAlphaTexture(const std::filesystem::p
         "japan_streets_background",
         "sun",
         "branches_winter",
-        "jiva_corridor_glass"
+        "jiva_corridor_glass",
+        "jdr_gate"
     };
 
     const std::vector<std::string> nmlTransparentTextures = {
         "plant_ivy",
         "leaf",
         "jdr_flowers",
-        "puddles"
+        "puddles",
+        "casa_grass"
     };
 
     if (isPathContainSubstring(diffuseTransparentTextures)) {
@@ -256,11 +258,13 @@ bool loadNML(const std::filesystem::path& path, const std::filesystem::path& exp
             rgb.readLine(binReader, lineIndex, rgb.size() / alpha.sizeY);
         }
         alphaQueue.push(alpha);
-        while (alphaQueue.front().sizeX > rgb.sizeX || alphaQueue.front().sizeY > rgb.sizeY)
+        while (alphaQueue.front().sizeX > rgb.sizeX || alphaQueue.front().sizeY > rgb.sizeY) {
             alphaQueue.pop();
+            if (alphaQueue.empty())
+                return false; // TODO: Investigate problem with rotated texture
+        }
 
         NMLImage nmlImage = createNML(rgb, alpha);
-        spdlog::info(exportPath.string());
         int result = stbi_write_png(exportPath.string().c_str(), nmlImage.sizeX, nmlImage.sizeY, 4, reinterpret_cast<const char*>(nmlImage.data.data()), 0);
         if (result > 0)
             return true;
