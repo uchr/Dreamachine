@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace parser
 {
@@ -48,6 +49,8 @@ private:
     PAKFileEntry* findFile(PAKIndex& pakIndex, std::string innerPathLeft, std::string innerPathPassed, int offset) const;
 
     std::unordered_map<std::string, PAKIndex> m_pakIndices;
+
+    std::unordered_set<std::string> m_extracted;
 };
 
 }

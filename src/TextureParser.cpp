@@ -12,8 +12,8 @@
 #include <Magnum/Magnum.h>
 #include <Magnum/Math/Vector3.h>
 
-#include <DirectXTex.h>
 #include <d3d11.h>
+#include <DirectXTex.h>
 
 #include <spdlog/spdlog.h>
 
@@ -75,7 +75,8 @@ std::optional<std::filesystem::path> exportAlphaTexture(const std::filesystem::p
 
     if (isPathContainSubstring(diffuseTransparentTextures)) {
         std::filesystem::path alphaOutputPath = getAlphaTexturePath(path);
-        createAlphaTexture(path, alphaOutputPath);
+        if (!std::filesystem::exists(alphaOutputPath))
+            createAlphaTexture(path, alphaOutputPath);
         return alphaOutputPath;
     }
     
@@ -83,7 +84,8 @@ std::optional<std::filesystem::path> exportAlphaTexture(const std::filesystem::p
         std::string filename = path.filename().string();
         filename.replace(filename.begin() + filename.find("_nml"), filename.end(), "");
         std::filesystem::path alphaOutputPath = getAlphaTexturePath(path.parent_path() / filename);
-        createAlphaTexture(path, alphaOutputPath);
+        if (!std::filesystem::exists(alphaOutputPath))
+            createAlphaTexture(path, alphaOutputPath);
         return alphaOutputPath;
     }
 
@@ -274,35 +276,35 @@ bool loadNML(const std::filesystem::path& path, const std::filesystem::path& exp
 }
 }
 
-void parseTextures(MeshPart& meshPart, const std::vector<std::filesystem::path>& texturesPath, const std::filesystem::path& exportPath) {
-    std::vector<std::filesystem::path> exportedTexturesPath;
+void parseTextures(MeshPart& meshPart, const std::vector<std::filesystem::path>& texturesPath, const std::filesystem::path& exportFolder) {
+    std::vector<std::filesystem::path> texturePaths;
     for (int i = 0; i < texturesPath.size(); ++i) {
         if (texturesPath[i] == "")
             continue;
 
         PAKParser::instance().tryExtract(texturesPath[i]);
 
-        bool loaded = false;
+        std::filesystem::path exportPath = exportFolder / texturesPath[i];
+        bool isLoaded = std::filesystem::exists(exportPath);
+        if (!isLoaded) {
+            std::filesystem::create_directories(exportPath.parent_path());
+            DirectX::ScratchImage imageData;
+            HRESULT hr = DirectX::LoadFromWICFile(widen(texturesPath[i].string()).c_str(), DirectX::WIC_FLAGS_NONE, nullptr, imageData);
+            if (!SUCCEEDED(hr))
+                hr = DirectX::LoadFromDDSFile(widen(texturesPath[i].string()).c_str(), DirectX::DDS_FLAGS_NO_LEGACY_EXPANSION, nullptr, imageData);
 
-        std::filesystem::create_directories(exportPath);
-        std::filesystem::path exportedPath = exportPath / texturesPath[i].filename();
+            if (SUCCEEDED(hr)) {
+                isLoaded = true;
+                hr = DirectX::SaveToWICFile(*imageData.GetImage(0, 0, 0), DirectX::WIC_FLAGS_NONE, DirectX::GetWICCodec(DirectX::WIC_CODEC_PNG), widen(exportPath.string()).c_str());
+            }
 
-        DirectX::ScratchImage imageData;
-        HRESULT hr = DirectX::LoadFromWICFile(widen(texturesPath[i].string()).c_str(), DirectX::WIC_FLAGS_NONE, nullptr, imageData);
-        if (!SUCCEEDED(hr))
-            hr = DirectX::LoadFromDDSFile(widen(texturesPath[i].string()).c_str(), DirectX::DDS_FLAGS_NO_LEGACY_EXPANSION, nullptr, imageData);
-
-        if (SUCCEEDED(hr)) {
-            loaded = true;
-            hr = DirectX::SaveToWICFile(*imageData.GetImage(0, 0, 0), DirectX::WIC_FLAGS_NONE, DirectX::GetWICCodec(DirectX::WIC_CODEC_PNG), widen(exportedPath.string()).c_str());
+            if (!isLoaded)
+                isLoaded = loadNML(texturesPath[i], exportPath);
         }
 
-        if (!loaded)
-            loaded = loadNML(texturesPath[i], exportedPath);
-
-        if (loaded) {
-            exportedTexturesPath.emplace_back(exportedPath);
-            auto alphaTexture = exportAlphaTexture(exportedPath);
+        if (isLoaded) {
+            texturePaths.emplace_back(exportPath);
+            auto alphaTexture = exportAlphaTexture(exportPath);
             if (alphaTexture.has_value())
                 meshPart.alphaTexture = alphaTexture;
         }
@@ -311,7 +313,7 @@ void parseTextures(MeshPart& meshPart, const std::vector<std::filesystem::path>&
         }
     }
 
-    meshPart.textures = exportedTexturesPath;
+    meshPart.textures = texturePaths;
 }
 
 }

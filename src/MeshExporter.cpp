@@ -191,7 +191,6 @@ bool exportScene(const parser::SceneNode& root, const std::string& bundleName, c
 
     ios->SetBoolProp(EXP_FBX_MATERIAL, true);
     ios->SetBoolProp(EXP_FBX_TEXTURE, true);
-    ios->SetBoolProp(EXP_FBX_EMBEDDED, true);
     ios->SetBoolProp(EXP_FBX_SHAPE, true);
     ios->SetBoolProp(EXP_FBX_GOBO, true);
     ios->SetBoolProp(EXP_FBX_ANIMATION, false);

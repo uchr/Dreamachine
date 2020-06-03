@@ -105,8 +105,10 @@ PAKParser::PAKParser(const std::filesystem::path& path)
     }
 }
 
-
 void PAKParser::tryExtract(const std::filesystem::path& path) {
+    if (m_extracted.contains(path.string()))
+        return;
+
     std::string innerPath = path.string();
     std::replace(innerPath.begin(), innerPath.end(), '/', '\\');
     spdlog::debug("Try to extract {}", innerPath);
@@ -123,6 +125,7 @@ void PAKParser::tryExtract(const std::filesystem::path& path) {
 
     if (pakIndex != nullptr && entry != nullptr) {
         extract(*pakIndex, *entry, path);
+        m_extracted.insert(path.string());
         spdlog::debug("Extracted successfully to {}", path.string());
     }
     else

@@ -263,7 +263,7 @@ std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::files
             for (int l = 0; l < part.header.numTextures; ++l) {
                 texturePath[l] = (part.tex[l].texIdx[i] == -1) ? "" : header.textures[info.texIdx[part.tex[l].texIdx[i]]];
             }
-            std::filesystem::path exportPath = std::filesystem::path("meshes") / m_bundleName / hierarchyPath;
+            std::filesystem::path exportPath = std::filesystem::path("meshes/textures") / m_bundleName;
             parseTextures(mesh->meshParts[i], texturePath, exportPath);
 
             mesh->meshParts[i].vertexInterval = std::pair(vOffset, vOffset + part.stageVertices[i]);
