@@ -3,6 +3,7 @@ find_package(fmt CONFIG REQUIRED)
 find_package(Corrade REQUIRED Main)
 find_package(FBXSDK REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
+find_package(CLI11 CONFIG REQUIRED)
 find_package(Magnum REQUIRED
     GL
     MeshTools
@@ -72,6 +73,7 @@ target_link_libraries(Dreamachine PRIVATE
     fmt::fmt
     spdlog::spdlog
     cppmmf
+    CLI11::CLI11
     "d3d11.lib"
 )
 
