@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Geometry.h"
+
 #include <vector>
 #include <string>
 #include <filesystem>
@@ -7,19 +9,6 @@
 
 namespace parser
 {
-
-struct Vector2 {
-    float x, y;
-};
-
-struct Vector3 {
-    float x, y, z;
-};
-
-struct Quaternion
-{
-    float x, y, z, w;
-};
 
 struct MeshPart {
     std::pair<int, int> indexInterval;
@@ -30,11 +19,15 @@ struct MeshPart {
 
 struct Mesh
 {
+    std::string name;
+
     std::vector<Vector3> vertices;
     std::vector<Vector3> normals;
     std::vector<Vector2> uvs;
-    std::vector<int> indices; // TODO: uint16_t
+    std::vector<uint16_t> indices;
+
     std::vector<MeshPart> meshParts;
+
     bool smoothness = false;
 };
 

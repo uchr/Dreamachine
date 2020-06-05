@@ -1,7 +1,7 @@
 #include "MainWindow.h"
 #include "PAKParser.h"
 #include "SharkParser.h"
-#include "Scene.h"
+#include "SceneParser.h"
 #include "MeshExporter.h"
 
 #include <CLI/CLI.hpp>
@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
             if (!meshName.empty() && sir.filename.find(meshName) == std::string::npos)
                 continue;
 
-            Scene scene(sir, bundleName);
+            SceneParser scene(sir, bundleName);
 
             if (scene.sceneRoot.has_value())
                 spdlog::info("SIR: '{}' parsed", sir.filename);

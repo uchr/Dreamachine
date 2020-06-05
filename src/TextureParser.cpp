@@ -1,5 +1,5 @@
 #include "TextureParser.h"
-#include "GeometryData.h"
+#include "Mesh.h"
 #include "BinReader.h"
 #include "PAKParser.h"
 

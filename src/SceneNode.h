@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GeometryData.h"
+#include "Mesh.h"
 
 #include <Magnum/Magnum.h>
 #include <Magnum/Math/Matrix4.h>

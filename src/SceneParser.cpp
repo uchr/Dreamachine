@@ -1,7 +1,8 @@
-#include "Scene.h"
+#include "SceneParser.h"
+
 #include "BinReader.h"
 #include "BUNParser.h"
-#include "GeometryData.h"
+#include "Mesh.h"
 #include "PAKParser.h"
 #include "SceneNode.h"
 #include "SharkNode.h"
@@ -116,29 +117,29 @@ void printFormat(StreamFormat& streamFormat)
     spdlog::dump_backtrace();
 }
 
-Scene::Scene(const SirEntry& sirEntry, const std::string& bundleName)
+SceneParser::SceneParser(const SirEntry& sirEntry, const std::string& bundleName)
     : sceneRoot(std::nullopt)
     , m_sirEntry(sirEntry)
 {
     loadScene(sirEntry.sirPath, bundleName);
 }
 
-void Scene::loadScene(const std::filesystem::path& sirPath, const std::string& bundleName) {
+void SceneParser::loadScene(const std::filesystem::path& sirPath, const std::string& bundleName) {
     loadBundle(bundleName);
     addScene(sirPath);
 }
 
-void Scene::loadBundle(const std::string& bundleName) {
+void SceneParser::loadBundle(const std::string& bundleName) {
     BUNParser bunParser("bundles/" + bundleName + ".bun");
     m_bundleName = bundleName;
     m_bundleHeader = bunParser.parseHeader();
 }
 
-void Scene::addScene(const std::filesystem::path& sirPath) {
+void SceneParser::addScene(const std::filesystem::path& sirPath) {
     sceneRoot = loadSir(sirPath);
 }
 
-std::optional<SceneNode> Scene::loadSir(const std::filesystem::path& sirPath) {
+std::optional<SceneNode> SceneParser::loadSir(const std::filesystem::path& sirPath) {
     spdlog::info("Parsing SIR {}...", sirPath.string());
     SharkParser cdrParser(sirPath.string());
     SharkNode* root = cdrParser.getRoot()->goSub("data/root");
@@ -154,7 +155,7 @@ std::optional<SceneNode> Scene::loadSir(const std::filesystem::path& sirPath) {
     return loadHierarchy(root, smrPath.string(), m_sirEntry.filename);
 }
 
-std::optional<SceneNode> Scene::loadHierarchy(SharkNode* node, const std::string& smrFile, const std::filesystem::path& hierarchyPath) {
+std::optional<SceneNode> SceneParser::loadHierarchy(SharkNode* node, const std::string& smrFile, const std::filesystem::path& hierarchyPath) {
     if (node == nullptr)
         return std::nullopt;
 
@@ -177,8 +178,8 @@ std::optional<SceneNode> Scene::loadHierarchy(SharkNode* node, const std::string
     auto shader = getEntryValue<std::string>(node, "shader");
     if (modelName.has_value() && shader.has_value())
     {
-        spdlog::debug("Trying to load {} * {}", smrFile, *modelName);
-        auto mesh = loadMesh(smrFile, hierarchyPath / sceneNode.name, *modelName, sceneNode.scale);
+        spdlog::debug("Trying to load {} in {}", *modelName, smrFile);
+        auto mesh = loadMesh(smrFile, *modelName, sceneNode.scale);
         if (mesh.has_value()) {
             isMmeshLoaded = true;
             sceneNode.mesh = mesh;
@@ -200,11 +201,11 @@ std::optional<SceneNode> Scene::loadHierarchy(SharkNode* node, const std::string
 
     if (isMmeshLoaded || !sceneNode.children.empty())
         return sceneNode;
-    
+
     return std::nullopt;
 }
 
-std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::filesystem::path& hierarchyPath, const std::string& modelName, float& outScale) {
+std::optional<Mesh> SceneParser::loadMesh(const std::string& smrFile, const std::string& modelName, float& outScale) {
     BinReaderMmap binReader("bundles/" + m_bundleName + ".bun");
 
     BundleHeader& header = m_bundleHeader;
@@ -251,6 +252,7 @@ std::optional<Mesh> Scene::loadMesh(const std::string& smrFile, const std::files
 
     auto mesh = parseMesh(format, vertices, part.indices);
     if (mesh.has_value()) {
+        mesh->name = modelName;
         if (modelName.find("skydome") != std::string::npos)
             mesh->smoothness = true;
 

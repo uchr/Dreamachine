@@ -1,6 +1,6 @@
 #include "GLView.h"
 
-#include "Scene.h"
+#include "SceneParser.h"
 #include "SceneIndex.h"
 #include "SceneNode.h"
 
@@ -158,9 +158,9 @@ void GLView::initializeGL() {
         .setSpecularColor(0x111111_rgbf)
         .setShininess(80.0f);
 
-    std::unique_ptr<parser::Scene> scene = std::make_unique<parser::Scene>(m_sceneIndex.sirs[0], m_sceneIndex.bundleName);
+    std::unique_ptr<parser::SceneParser> scene = std::make_unique<parser::SceneParser>(m_sceneIndex.sirs[0], m_sceneIndex.bundleName);
     for (int i = 1; !scene->sceneRoot.has_value() && i < m_sceneIndex.sirs.size(); ++i)
-        scene = std::make_unique<parser::Scene>(m_sceneIndex.sirs[i], m_sceneIndex.bundleName);
+       scene = std::make_unique<parser::SceneParser>(m_sceneIndex.sirs[i], m_sceneIndex.bundleName);
     assert(scene->sceneRoot.has_value());
 
     m_meshes = Containers::Array<Containers::Optional<GL::Mesh>>{scene->sceneRoot->numberOfMeshes()};
