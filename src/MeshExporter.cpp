@@ -63,6 +63,11 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
     fbxMeshNode->LclRotation.Set(FbxVector4(transformation.rotation.x * rad2Deg, transformation.rotation.y * rad2Deg, transformation.rotation.z * rad2Deg));
     fbxMeshNode->LclScaling.Set(FbxVector4(transformation.scale, transformation.scale, transformation.scale));
 
+    if (node.name == "scene_root") {
+        fbxMeshNode->LclRotation.Set(FbxVector4(-90, 0, 0));
+        fbxMeshNode->LclScaling.Set(FbxVector4(50, 50, 50));
+    }
+
     if (node.mesh.has_value() && !node.mesh->meshParts.empty() && !node.mesh->meshParts[0].textures.empty()) {
         const auto& mesh = *node.mesh;
         FbxMesh* fbxMesh = FbxMesh::Create(manager, node.name.c_str());
@@ -148,6 +153,18 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
 
         fbxMeshNode->SetNodeAttribute(fbxMesh);
         fbxMeshNode->SetShadingMode(FbxNode::eTextureShading);
+    }
+
+    if (node.light.has_value()) {
+        const auto& light = *node.light;
+        FbxNode* fbxLightNode = FbxNode::Create(scene, "PointLightNode");
+        fbxMeshNode->AddChild(fbxLightNode);
+
+        FbxLight* fbxLight = FbxLight::Create(scene, "PointLight");
+        fbxLightNode->SetNodeAttribute(fbxLight);
+        fbxLight->LightType.Set(FbxLight::ePoint);
+        fbxLight->Color.Set(FbxDouble3(light.color.x / 255.0, light.color.y / 255.0, light.color.z / 255.0));
+        fbxLight->Intensity.Set(light.intencity);
     }
 
     if (!node.children.empty()) {

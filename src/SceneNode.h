@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Mesh.h"
+#include "Light.h"
 
 #include <Magnum/Magnum.h>
 #include <Magnum/Math/Matrix4.h>
@@ -21,6 +22,7 @@ struct SceneNode
     std::string name;
 
     std::optional<Mesh> mesh;
+    std::optional<PointLight> light;
 
     Vector3 position;
     Quaternion rotation;

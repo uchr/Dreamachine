@@ -26,6 +26,7 @@ private:
     std::optional<SceneNode> loadSir(const std::filesystem::path& sirPath);
     std::optional<SceneNode> loadHierarchy(SharkNode* node, const std::string& smrFile, const std::filesystem::path& hierarchyPath);
     std::optional<Mesh> loadMesh(const std::string& smrFile, const std::string& modelName, float& outScale);
+    std::optional<PointLight> loadLight(const Mesh& mesh);
 
     BundleHeader m_bundleHeader;
     std::string m_bundleName;

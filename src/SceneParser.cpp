@@ -9,6 +9,9 @@
 #include "SharkParser.h"
 #include "TextureParser.h"
 
+#define STBI_ONLY_PNG
+#include <stb_image.h>
+
 #include <spdlog/spdlog.h>
 
 #include <array>
@@ -183,6 +186,8 @@ std::optional<SceneNode> SceneParser::loadHierarchy(SharkNode* node, const std::
         if (mesh.has_value()) {
             isMmeshLoaded = true;
             sceneNode.mesh = mesh;
+
+            sceneNode.light = loadLight(*mesh);
         }
     }
 
@@ -276,6 +281,46 @@ std::optional<Mesh> SceneParser::loadMesh(const std::string& smrFile, const std:
     }
 
     return mesh;
+}
+
+std::optional<PointLight> SceneParser::loadLight(const Mesh& mesh) {
+    if (mesh.name.find("lampglow") == std::string::npos)
+        return std::nullopt;
+
+    assert(!mesh.meshParts.empty() && !mesh.meshParts[0].textures.empty());
+
+    const auto& texturePath = mesh.meshParts[0].textures[0];
+
+    int x, y, component;
+    unsigned char *data = stbi_load(texturePath.string().c_str(), &x, &y, &component, 0);
+    int numberOfPixels = x * y;
+    Vector3 averageColor{0.0, 0.0, 0.0};
+    for (int i = 0; i < numberOfPixels; ++i) {
+        averageColor.x += data[i * 4 + 0];
+        averageColor.y += data[i * 4 + 1];
+        averageColor.z += data[i * 4 + 2];
+    }
+    stbi_image_free(data);
+
+    averageColor.x /= numberOfPixels;
+    averageColor.y /= numberOfPixels;
+    averageColor.z /= numberOfPixels;
+
+    Vector3 bmin = mesh.vertices[0];
+    Vector3 bmax = mesh.vertices[0];
+    for (const Vector3& v : mesh.vertices) {
+        bmin.x = std::min(bmin.x, v.x);
+        bmin.y = std::min(bmin.y, v.y);
+        bmin.z = std::min(bmin.z, v.z);
+        bmax.x = std::max(bmax.x, v.x);
+        bmax.y = std::max(bmax.y, v.y);
+        bmax.z = std::max(bmax.z, v.z);
+    }
+
+    Vector3 center{0.5f * (bmin.x + bmax.x), 0.5f * (bmin.y + bmax.y), 0.5f * (bmin.z + bmax.z)};
+    float intencity = std::max(bmax.x - bmin.x, std::max(bmax.y - bmin.y, bmax.z - bmin.z)) * 10;
+
+    return PointLight{averageColor, center, intencity};
 }
 
 }
