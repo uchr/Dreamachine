@@ -8,7 +8,7 @@ namespace Utils
 {
 
 std::vector<std::string> splitString(const std::string& s, char delimiter);
-std::string getFileNameWithoutExtension(const std::string& path);
-std::string getFileNameWithoutExtension(const std::filesystem::path& path);
+std::string getFilenameWithoutExtension(const std::string& path);
+std::string getFilenameWithoutExtension(const std::filesystem::path& path);
 
 }

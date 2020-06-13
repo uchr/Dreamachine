@@ -68,7 +68,7 @@ SceneIndex SharkParser::parseScene(const std::string& bundleName) {
     SceneIndex sceneIndex;
     sceneIndex.bundleName = bundleName;
     for (const auto& sirPath : sirs) {
-        std::string filename = Utils::getFileNameWithoutExtension(sirPath);
+        std::string filename = Utils::getFilenameWithoutExtension(sirPath);
         SirEntry entry{filename, sirPath};
         sceneIndex.sirs.emplace_back(entry);
     }

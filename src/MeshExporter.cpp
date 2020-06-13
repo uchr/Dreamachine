@@ -9,9 +9,11 @@
 void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const parser::SceneNode& node)
 {
     auto createTexture = [&](const std::filesystem::path& path) {
-        FbxFileTexture* texture = FbxFileTexture::Create(manager, path.string().c_str());
+        const std::string textureName = Utils::getFilenameWithoutExtension(path);
+        FbxFileTexture* texture = FbxFileTexture::Create(manager, textureName.c_str());
 
         texture->SetFileName(path.string().c_str());
+        texture->SetName(textureName.c_str());
         texture->SetTextureUse(FbxTexture::eStandard);
         texture->SetMappingType(FbxTexture::eUV);
         texture->SetMaterialUse(FbxFileTexture::eModelMaterial);
@@ -25,11 +27,8 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
     };
 
     auto createMaterial = [&](const parser::MeshPart& meshPart) {
-        FbxString materialName = Utils::getFileNameWithoutExtension(meshPart.textures[0]).c_str();
-
-        // Create material
-        FbxString shadingName = "Phong";
-        FbxSurfacePhong* material = FbxSurfacePhong::Create(manager, materialName.Buffer());
+        const std::string materialName = Utils::getFilenameWithoutExtension(meshPart.textures[0]);
+        FbxSurfacePhong* material = FbxSurfacePhong::Create(manager, materialName.c_str());
         material->Ambient.Set(FbxDouble3(0.8, 0.8, 0.8));
 
         const auto& diffuseTexturePath = meshPart.textures[0];

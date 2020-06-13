@@ -18,13 +18,13 @@ std::vector<std::string> splitString(const std::string& str, char delimiter)
     return tokens;
 }
 
-std::string getFileNameWithoutExtension(const std::string& path) {
+std::string getFilenameWithoutExtension(const std::string& path) {
     std::filesystem::path temp(path);
-    return temp.filename().replace_extension("").string();
+    return temp.filename().replace_extension().string();
 }
 
-std::string getFileNameWithoutExtension(const std::filesystem::path& path) {
-    return path.filename().replace_extension("").string();
+std::string getFilenameWithoutExtension(const std::filesystem::path& path) {
+    return path.filename().replace_extension().string();
 }
 
 }

@@ -101,7 +101,7 @@ PAKParser::PAKParser(const std::filesystem::path& path)
     for(auto& childIt: std::filesystem::directory_iterator(path)) {
         auto childPath = childIt.path();
         if (childPath.extension().string() == ".pak")
-            m_pakIndices[Utils::getFileNameWithoutExtension(childPath)] = PAKIndex(childPath);
+            m_pakIndices[Utils::getFilenameWithoutExtension(childPath)] = PAKIndex(childPath);
     }
 }
 
