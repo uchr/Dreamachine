@@ -1,23 +1,15 @@
-#include "GLView.h"
+#include "ViewScene.h"
+
+#include "InputManager.h"
+#include "TimeManager.h"
 
 #include <parser/SceneParser.h>
 #include <parser/SceneIndex.h>
-#include <parser/SceneNode.h>
 
-#include <Corrade/Containers/Optional.h>
-#include <Corrade/PluginManager/Manager.h>
-#include <Corrade/Utility/Arguments.h>
-#include <Corrade/Utility/DebugStl.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Mesh.h>
-#include <magnum/Math/Vector2.h>
-#include <magnum/Math/Vector3.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/GL/DefaultFramebuffer.h>
-#include <Magnum/GL/Mesh.h>
-#include <Magnum/GL/Renderer.h>
-#include <Magnum/GL/Framebuffer.h>
-#include <Magnum/GL/Texture.h>
 #include <Magnum/GL/TextureFormat.h>
 #include <Magnum/MeshTools/Compile.h>
 #include <Magnum/Trade/AbstractImporter.h>
@@ -25,12 +17,14 @@
 #include <Magnum/Trade/MeshData3D.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
-#include <Magnum/Trade/SceneData.h>
-#include <Magnum/Trade/TextureData.h>
+
+#include <cassert>
 
 using namespace Magnum;
 using namespace Math::Literals;
 
+namespace
+{
 class TexturedDrawable: public SceneGraph::Drawable3D {
     public:
         explicit TexturedDrawable(Object3D& object, Shaders::Phong& shader, GL::Mesh& mesh, GL::Texture2D& texture, SceneGraph::DrawableGroup3D& group)
@@ -99,30 +93,21 @@ Trade::MeshData3D createMeshData(const parser::Mesh& mesh, size_t meshPartIndex)
                                {});
     return meshData;
 }
-
-GLView::GLView(Platform::GLContext& context, QWidget* parent, const parser::SceneIndex& sceneIndex)
-    : QOpenGLWidget(parent)
-    , m_context(context)
-    , m_sceneIndex(sceneIndex)
-    , m_phi(3.14f)
-    , m_theta(1.3f)
-    , m_cameraPosition(0.5f, 32.0f, 8.0f)
-{
 }
 
-void GLView::initializeGL() {
-    m_context.create();
-
-    GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
-    GL::Renderer::enable(GL::Renderer::Feature::FaceCulling);
-
+ViewScene::ViewScene(const parser::SceneIndex& sceneIndex, const InputManager& inputManager, const TimeManager& timeManager)
+    : m_sceneIndex(sceneIndex)
+    , m_inputManager(inputManager)
+    , m_timeManager(timeManager)
+    , m_texturedShader(Shaders::Phong::Flag::DiffuseTexture | Shaders::Phong::Flag::AmbientTexture)
+{
     m_cameraObject.setParent(&m_scene);
-    updateCameraObject();
+    updateCameraTransform();
 
-    (*(m_camera = new SceneGraph::Camera3D{m_cameraObject}))
-        .setAspectRatioPolicy(SceneGraph::AspectRatioPolicy::Extend)
-        .setProjectionMatrix(Matrix4::perspectiveProjection(35.0_degf, 1.0f, 0.01f, 1000.0f))
-        .setViewport(GL::defaultFramebuffer.viewport().size());
+    m_camera = new SceneGraph::Camera3D(m_cameraObject);
+    (*m_camera).setAspectRatioPolicy(SceneGraph::AspectRatioPolicy::Extend)
+               .setProjectionMatrix(Matrix4::perspectiveProjection(35.0_degf, 1.0f, 0.01f, 1000.0f))
+               .setViewport(GL::defaultFramebuffer.viewport().size());
 
     m_manipulator.setParent(&m_scene);
 
@@ -134,116 +119,60 @@ void GLView::initializeGL() {
     m_meshes = Containers::Array<Containers::Optional<GL::Mesh>>{scene->sceneRoot->numberOfMeshes()};
     m_textures = Containers::Array<Containers::Optional<Magnum::GL::Texture2D>>{scene->sceneRoot->numberOfMeshes()};
 
-    m_texturedShader = std::make_unique<Shaders::Phong>(Shaders::Phong::Flag::DiffuseTexture | Shaders::Phong::Flag::AmbientTexture);
-    m_texturedShader
-        ->setAmbientColor(0x5c5c5c_rgbf)
-        .setSpecularColor(0x000000_rgbf)
-        .setShininess(0.0f);
+    m_texturedShader.setAmbientColor(0x5c5c5c_rgbf)
+                    .setSpecularColor(0x000000_rgbf)
+                    .setShininess(0.0f);
 
     setupScene(*scene->sceneRoot);
-
-    m_time.start();
-    m_oldTime = m_time.elapsed();
-    m_deltaTime = 0.0f;
-
-    /* Clean up Magnum state when giving control back to Qt */
-    GL::Context::current().resetState(GL::Context::State::EnterExternal);
 }
 
-void GLView::paintGL() {
-    /* Reset state to avoid Qt affecting Magnum */
-    GL::Context::current().resetState(GL::Context::State::ExitExternal);
-    auto qtDefaultFramebuffer = GL::Framebuffer::wrap(defaultFramebufferObject(), {{}, {width(), height()}});
-
-    m_currentTime = m_time.elapsed();
-    m_deltaTime = (m_currentTime - m_oldTime) / 1000.0f;
-    m_oldTime = m_currentTime;
-
-    updateCameraObject();
-
-    qtDefaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
+void ViewScene::draw() {
+    updateCameraTransform();
 
     m_camera->draw(m_drawables);
-
-    /* Clean up Magnum state when giving control back to Qt */
-    GL::Context::current().resetState(GL::Context::State::EnterExternal);
-
-    update();
 }
 
-void GLView::resizeGL(int width, int height)
-{
+void ViewScene::setViewport(int width, int height) {
     m_camera->setViewport(Vector2i{width, height});
 }
 
-void GLView::mousePressEvent(QMouseEvent* event) {
-    if (!event->buttons().testFlag(Qt::LeftButton))
-        return;
+void ViewScene::rotateCamera(const Vector2& mouseDelta) {
+    Vector2 delta = CameraRotationSpeed * mouseDelta;
 
-    m_previousCursorPosition = Vector2(event->localPos().x(), event->localPos().y());
+    m_cameraTransform.phi += delta.x();
+    m_cameraTransform.theta += delta.y();
+    m_cameraTransform.theta = Math::clamp(m_cameraTransform.theta, 0.0f, Math::Constants<float>::pi());
 }
 
-void GLView::mouseReleaseEvent(QMouseEvent* event) {
-    if (!event->buttons().testFlag(Qt::LeftButton))
-        return;
-}
-
-void GLView::mouseMoveEvent(QMouseEvent* event) {
-    if (!event->buttons().testFlag(Qt::LeftButton))
-        return;
-
-    Vector2 currrentPos(event->localPos().x(), event->localPos().y());
-    Vector2 delta = 3.0f * (currrentPos - m_previousCursorPosition) / Vector2(width(), height());
-
-    m_phi += delta.x();
-    m_theta += delta.y();
-    m_theta = Math::clamp(m_theta, 0.0f, Math::Constants<float>::pi());
-
-    m_previousCursorPosition = currrentPos;
-}
-
-void GLView::keyPressEvent(QKeyEvent* event) {
-    if (event->isAutoRepeat())
-        return;
-
-    m_inputManager.keyPress(event->key());
-}
-
-void GLView::keyReleaseEvent(QKeyEvent* event) {
-    if (event->isAutoRepeat())
-        return;
-
-    m_inputManager.keyRelease(event->key());
-}
-
-void GLView::updateCameraObject() {
+void ViewScene::updateCameraTransform() {
+    const float movementSpeed = CameraMovementSpeed * m_timeManager.deltaTime();
     if (m_inputManager.isKeyPressed(Qt::Key_W))
-        m_cameraPosition += -CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::zAxis());
+        m_cameraTransform.position += -movementSpeed * m_cameraObject.transformation().transformVector(Vector3::zAxis());
     if (m_inputManager.isKeyPressed(Qt::Key_S))
-        m_cameraPosition += CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::zAxis());
+        m_cameraTransform.position += movementSpeed * m_cameraObject.transformation().transformVector(Vector3::zAxis());
     if (m_inputManager.isKeyPressed(Qt::Key_A))
-        m_cameraPosition += -CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::xAxis());
+        m_cameraTransform.position += -movementSpeed * m_cameraObject.transformation().transformVector(Vector3::xAxis());
     if (m_inputManager.isKeyPressed(Qt::Key_D))
-        m_cameraPosition += CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::xAxis());
+        m_cameraTransform.position += movementSpeed * m_cameraObject.transformation().transformVector(Vector3::xAxis());
     if (m_inputManager.isKeyPressed(Qt::Key_Q))
-        m_cameraPosition += -CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::yAxis());
+        m_cameraTransform.position += -movementSpeed * m_cameraObject.transformation().transformVector(Vector3::yAxis());
     if (m_inputManager.isKeyPressed(Qt::Key_E))
-        m_cameraPosition += CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::yAxis());
+        m_cameraTransform.position += movementSpeed * m_cameraObject.transformation().transformVector(Vector3::yAxis());
 
-    Quaternion rotation = Quaternion::rotation(Rad{m_phi}, Vector3::zAxis()) *
+    Quaternion rotation = Quaternion::rotation(Rad{m_cameraTransform.phi}, Vector3::zAxis()) *
                           Quaternion::rotation(Rad{0}, Vector3::yAxis()) *
-                          Quaternion::rotation(Rad{m_theta}, Vector3::xAxis());
-    Matrix4 transfromation = Matrix4::from(rotation.toMatrix(), m_cameraPosition);
+                          Quaternion::rotation(Rad{m_cameraTransform.theta}, Vector3::xAxis());
+    Matrix4 transfromation = Matrix4::from(rotation.toMatrix(), m_cameraTransform.position);
     m_cameraObject.setTransformation(transfromation);
 }
 
-void GLView::setupScene(const parser::SceneNode& node)
+void ViewScene::setupScene(const parser::SceneNode& node)
 {
     size_t meshIndex = 0;
     setupScene(node, m_manipulator, meshIndex);
 }
 
-void GLView::setupScene(const parser::SceneNode& node, Object3D& parent, size_t& meshIndex) {
+void ViewScene::setupScene(const parser::SceneNode& node, Object3D& parent, size_t& meshIndex) {
     auto* object = new Object3D{&parent};
 
     object->setTransformation(node.computeTransformationMatrix());
@@ -281,7 +210,7 @@ void GLView::setupScene(const parser::SceneNode& node, Object3D& parent, size_t&
 
             m_textures[meshIndex] = std::move(texture);
 
-            new TexturedDrawable(*object, *m_texturedShader, *m_meshes[meshIndex], *m_textures[meshIndex], m_drawables);
+            new TexturedDrawable(*object, m_texturedShader, *m_meshes[meshIndex], *m_textures[meshIndex], m_drawables);
             ++meshIndex;
         }
     }

@@ -1,5 +1,5 @@
 #include "MainWindow.h"
-#include "GLView.h"
+#include "View.h"
 
 #include <parser/SceneIndex.h>
 
@@ -7,9 +7,9 @@
 #include <QGridLayout>
 
 MainWindow::MainWindow(Magnum::Platform::GLContext& context, const parser::SceneIndex& sceneIndex)
-    : m_glView(new GLView(context, this, sceneIndex))
+    : m_View(new View(context, this, sceneIndex))
 {
-    m_glView->setFocusPolicy(Qt::FocusPolicy::StrongFocus);
+    m_View->setFocusPolicy(Qt::FocusPolicy::StrongFocus);
 
     QMenu *fileMenu = menuBar()->addMenu("&File");
     QAction *open = new QAction("O&pen", fileMenu);
@@ -18,7 +18,7 @@ MainWindow::MainWindow(Magnum::Platform::GLContext& context, const parser::Scene
     QGridLayout* layout = new QGridLayout(this);
     m_listView = new QListView(this);
     layout->addWidget(m_listView, 0, 0);
-    layout->addWidget(m_glView, 0, 1);
+    layout->addWidget(m_View, 0, 1);
 
     layout->setColumnStretch(0, 1);
     layout->setColumnStretch(1, 4);

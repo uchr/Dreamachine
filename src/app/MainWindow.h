@@ -21,5 +21,5 @@ public:
     MainWindow(Magnum::Platform::GLContext& context, const parser::SceneIndex& sceneIndex);
 
     QListView* m_listView;
-    QOpenGLWidget* m_glView;
+    QOpenGLWidget* m_View;
 };
