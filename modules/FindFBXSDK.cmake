@@ -49,6 +49,7 @@ else()
 endif()
 set(_fbxsdk_libname_debug "libfbxsdk.lib")
 set(_fbxsdk_libname_release "libfbxsdk.lib")
+set(_fbxsdk_dllname "libfbxsdk.dll")
 
 # should point the the FBX SDK installation dir
 set(FBXSDK_ROOT "${_fbxsdk_root}")
@@ -71,6 +72,11 @@ find_library(FBXSDK_LIBRARY_DEBUG ${_fbxsdk_libname_debug}
   PATHS "${FBXSDK_ROOT}/${_fbxsdk_libdir_debug}")
 message("FBXSDK_LIBRARY_DEBUG: ${FBXSDK_LIBRARY_DEBUG}")
 
+find_file(FBXSDK_DLL ${_fbxsdk_dllname}
+  NO_CMAKE_FIND_ROOT_PATH
+  PATHS "${FBXSDK_ROOT}/${_fbxsdk_libdir_release}")
+message("FBXSDK_DLL: ${FBXSDK_DLL}")
+
 find_package_handle_standard_args(FbxSdk DEFAULT_MSG
                                   FBXSDK_LIBRARY FBXSDK_INCLUDE_DIR)
 
@@ -79,3 +85,4 @@ mark_as_advanced(FBXSDK_INCLUDE_DIR FBXSDK_LIBRARY)
 set(FBXSDK_INCLUDE_DIRS ${FBXSDK_INCLUDE_DIR})
 set(FBXSDK_LIBRARIES ${FBXSDK_LIBRARY})
 set(FBXSDK_LIBRARIES_DEBUG ${FBXSDK_LIBRARY_DEBUG})
+set(FBXSDK_DLL ${FBXSDK_DLL})

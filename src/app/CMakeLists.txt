@@ -71,5 +71,10 @@ target_link_libraries(Dreamachine PRIVATE
 target_link_libraries(Dreamachine PRIVATE optimized ${DIRECTXTEX_LIB})
 target_link_libraries(Dreamachine PRIVATE debug ${DIRECTXTEX_LIB_DEBUG})
 
+add_custom_command(TARGET Dreamachine POST_BUILD 
+                   COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                   ${FBXSDK_DLL}
+                   $<TARGET_FILE_DIR:Dreamachine>)
+
 # Make the executable a default target to build & run in Visual Studio
 set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Dreamachine)
