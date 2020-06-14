@@ -37,21 +37,11 @@ find_library(DIRECTXTEX_LIB_DEBUG
 set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
 add_executable(Dreamachine
-    main.cpp
-    MainWindow.cpp
     GLView.cpp
     InputManager.cpp
-    TextureParser.cpp
-    SceneParser.cpp
-    SceneNode.cpp
+    main.cpp
+    MainWindow.cpp
     MeshExporter.cpp
-    BundleHeader.cpp
-    Utils.cpp
-    BUNParser.cpp
-    PAKParser.cpp
-    BinReader.cpp
-    SharkNode.cpp
-    SharkParser.cpp
 )
 
 if (FBXSDK_FOUND)
@@ -73,8 +63,8 @@ target_link_libraries(Dreamachine PRIVATE
     Qt5::Widgets
     fmt::fmt
     spdlog::spdlog
-    cppmmf
     CLI11::CLI11
+    parser
     "d3d11.lib"
 )
 

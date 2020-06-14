@@ -1,7 +1,8 @@
 #include "MeshExporter.h"
-#include "TextureParser.h"
-#include "SceneNode.h"
-#include "Utils.h"
+
+#include <parser/TextureParser.h>
+#include <parser/SceneNode.h>
+#include <parser/Utils.h>
 
 #include <fbxsdk.h>
 #include <spdlog/spdlog.h>

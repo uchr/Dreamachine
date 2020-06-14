@@ -1,8 +1,9 @@
 #include "MainWindow.h"
-#include "PAKParser.h"
-#include "SharkParser.h"
-#include "SceneParser.h"
 #include "MeshExporter.h"
+
+#include <parser/PAKParser.h>
+#include <parser/SharkParser.h>
+#include <parser/SceneParser.h>
 
 #include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>

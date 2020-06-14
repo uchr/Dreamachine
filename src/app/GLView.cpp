@@ -1,8 +1,8 @@
 #include "GLView.h"
 
-#include "SceneParser.h"
-#include "SceneIndex.h"
-#include "SceneNode.h"
+#include <parser/SceneParser.h>
+#include <parser/SceneIndex.h>
+#include <parser/SceneNode.h>
 
 #include <Corrade/Containers/Optional.h>
 #include <Corrade/PluginManager/Manager.h>

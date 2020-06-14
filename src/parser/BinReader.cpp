@@ -1,6 +1,8 @@
 #include "BinReader.h"
 #include "PAKParser.h"
 
+#include <cpp-mmf/memory_mapped_file.hpp>
+
 #include <spdlog/spdlog.h>
 
 #include <fstream>
@@ -113,32 +115,34 @@ bool BinReader::isEnd() const {
 }
 
 BinReaderMmap::BinReaderMmap(const std::filesystem::path& path) {
-    mmf.open(path.string().c_str(), true);
-    if (!mmf.is_open())
+    m_mmf = std::make_unique<memory_mapped_file::read_only_mmf>(path.string().c_str(), true);
+    if (!m_mmf->is_open())
         spdlog::error("Can't open {}", path.string());
 }
 
 BinReaderMmap::BinReaderMmap(const std::filesystem::path& path, size_t offset, size_t size) {
-    mmf.open(path.string().c_str(), false);
-    mmf.map(offset, size);
-    if (!mmf.is_open())
+    m_mmf = std::make_unique<memory_mapped_file::read_only_mmf>(path.string().c_str(), false);
+    m_mmf->map(offset, size);
+    if (!m_mmf->is_open())
         spdlog::error("Can't open {}", path.string());
 }
 
+BinReaderMmap::~BinReaderMmap() = default;
+
 const char* BinReaderMmap::data() const {
-    return mmf.data();
+    return m_mmf->data();
 }
 
 char* BinReaderMmap::data() {
-    return const_cast<char*>(mmf.data());
+    return const_cast<char*>(m_mmf->data());
 }
 
 size_t BinReaderMmap::size() const {
-    return mmf.mapped_size();
+    return m_mmf->mapped_size();
 }
 
 bool BinReaderMmap::isOpen() const {
-    return mmf.is_open();
+    return m_mmf->is_open();
 }
 
 BinReaderMemory::BinReaderMemory(const char* data, size_t size)

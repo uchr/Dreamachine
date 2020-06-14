@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "GLView.h"
-#include "SceneIndex.h"
+
+#include <parser/SceneIndex.h>
 
 #include <QMenuBar>
 #include <QGridLayout>

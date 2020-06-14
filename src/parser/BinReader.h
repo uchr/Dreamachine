@@ -1,9 +1,11 @@
 #pragma once
 
-#include <cpp-mmf/memory_mapped_file.hpp>
-
 #include <filesystem>
 #include <string>
+
+namespace memory_mapped_file {
+    class read_only_mmf;
+}
 
 namespace parser
 {
@@ -67,6 +69,7 @@ class BinReaderMmap : public BinReader {
 public:
     BinReaderMmap(const std::filesystem::path& path);
     BinReaderMmap(const std::filesystem::path& path, size_t offset, size_t size);
+    ~BinReaderMmap();
 
     const char* data() const override;
     char* data() override;
@@ -76,7 +79,7 @@ public:
     bool isOpen() const;
 
 private:
-    memory_mapped_file::read_only_mmf mmf;
+    std::unique_ptr<memory_mapped_file::read_only_mmf> m_mmf;
 };
 
 class BinReaderMemory : public BinReader {
