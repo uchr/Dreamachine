@@ -40,6 +40,7 @@ add_executable(Dreamachine
     main.cpp
     MainWindow.cpp
     GLView.cpp
+    InputManager.cpp
     TextureParser.cpp
     SceneParser.cpp
     SceneNode.cpp
