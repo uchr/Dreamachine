@@ -1,5 +1,7 @@
 #pragma once
 
+#include "InputManager.h"
+
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Optional.h>
 #include <Magnum/Math/Color.h>
@@ -41,11 +43,15 @@ class GLView: public QOpenGLWidget {
         void mousePressEvent(QMouseEvent *event) override;
         void mouseReleaseEvent(QMouseEvent *event) override;
         void mouseMoveEvent(QMouseEvent *event) override;
+
         void keyPressEvent(QKeyEvent *event) override;
+        void keyReleaseEvent(QKeyEvent *event) override;
 
         void updateCameraObject();
         void setupScene(const parser::SceneNode& node);
         void setupScene(const parser::SceneNode& node, Object3D& parent, size_t& meshIndex);
+
+        InputManager m_inputManager;
 
         Magnum::Platform::GLContext& m_context;
         Magnum::Vector2 m_previousCursorPosition;

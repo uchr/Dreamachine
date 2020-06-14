@@ -136,7 +136,7 @@ void GLView::initializeGL() {
 
     m_texturedShader = std::make_unique<Shaders::Phong>(Shaders::Phong::Flag::DiffuseTexture | Shaders::Phong::Flag::AmbientTexture);
     m_texturedShader
-        ->setAmbientColor(0x6b6b6b_rgbf)
+        ->setAmbientColor(0x5c5c5c_rgbf)
         .setSpecularColor(0x000000_rgbf)
         .setShininess(0.0f);
 
@@ -158,6 +158,8 @@ void GLView::paintGL() {
     m_currentTime = m_time.elapsed();
     m_deltaTime = (m_currentTime - m_oldTime) / 1000.0f;
     m_oldTime = m_currentTime;
+
+    updateCameraObject();
 
     qtDefaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
 
@@ -198,28 +200,36 @@ void GLView::mouseMoveEvent(QMouseEvent* event) {
     m_theta = Math::clamp(m_theta, 0.0f, Math::Constants<float>::pi());
 
     m_previousCursorPosition = currrentPos;
-
-    updateCameraObject();
 }
 
 void GLView::keyPressEvent(QKeyEvent* event) {
-    if (event->key() == Qt::Key_W)
-        m_cameraPosition += -CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::zAxis());
-    if (event->key() == Qt::Key_S)
-        m_cameraPosition += CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::zAxis());
-    if (event->key() == Qt::Key_A)
-        m_cameraPosition += -CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::xAxis());
-    if (event->key() == Qt::Key_D)
-        m_cameraPosition += CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::xAxis());
-    if (event->key() == Qt::Key_Q)
-        m_cameraPosition += -CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::yAxis());
-    if (event->key() == Qt::Key_E)
-        m_cameraPosition += CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::yAxis());
+    if (event->isAutoRepeat())
+        return;
 
-    updateCameraObject();
+    m_inputManager.keyPress(event->key());
+}
+
+void GLView::keyReleaseEvent(QKeyEvent* event) {
+    if (event->isAutoRepeat())
+        return;
+
+    m_inputManager.keyRelease(event->key());
 }
 
 void GLView::updateCameraObject() {
+    if (m_inputManager.isKeyPressed(Qt::Key_W))
+        m_cameraPosition += -CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::zAxis());
+    if (m_inputManager.isKeyPressed(Qt::Key_S))
+        m_cameraPosition += CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::zAxis());
+    if (m_inputManager.isKeyPressed(Qt::Key_A))
+        m_cameraPosition += -CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::xAxis());
+    if (m_inputManager.isKeyPressed(Qt::Key_D))
+        m_cameraPosition += CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::xAxis());
+    if (m_inputManager.isKeyPressed(Qt::Key_Q))
+        m_cameraPosition += -CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::yAxis());
+    if (m_inputManager.isKeyPressed(Qt::Key_E))
+        m_cameraPosition += CameraSpeed * m_deltaTime * m_cameraObject.transformation().transformVector(Vector3::yAxis());
+
     Quaternion rotation = Quaternion::rotation(Rad{m_phi}, Vector3::zAxis()) *
                           Quaternion::rotation(Rad{0}, Vector3::yAxis()) *
                           Quaternion::rotation(Rad{m_theta}, Vector3::xAxis());
