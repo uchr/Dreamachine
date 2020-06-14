@@ -33,7 +33,7 @@ Magnum::Vector3 toEulerAngles(Magnum::Quaternion q) {
 void numberOfMeshes(const parser::SceneNode& node, size_t& number)
 {
     if (node.mesh.has_value())
-        ++number;
+        number += node.mesh->meshParts.size();
 
     if (!node.children.empty()) {
         for (size_t i = 0; i < node.children.size(); ++i)

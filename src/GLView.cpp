@@ -31,34 +31,6 @@
 using namespace Magnum;
 using namespace Math::Literals;
 
-class ColoredDrawable: public SceneGraph::Drawable3D {
-    public:
-        explicit ColoredDrawable(Object3D& object, Shaders::Phong& shader, GL::Mesh& mesh, const Color4& color, SceneGraph::DrawableGroup3D& group)
-            : SceneGraph::Drawable3D{object, &group}
-            , m_shader(shader)
-            , m_mesh(mesh)
-            , m_color{color}
-        {
-        }
-
-    private:
-        void draw(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera) override;
-
-        Shaders::Phong& m_shader;
-        GL::Mesh& m_mesh;
-        Color4 m_color;
-};
-
-void ColoredDrawable::draw(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera) {
-    m_shader
-        .setDiffuseColor(m_color)
-        .setLightPosition(camera.cameraMatrix().transformPoint({-3.0f, 10.0f, 10.0f}))
-        .setTransformationMatrix(transformationMatrix)
-        .setNormalMatrix(transformationMatrix.normalMatrix())
-        .setProjectionMatrix(camera.projectionMatrix());
-    m_mesh.draw(m_shader);
-}
-
 class TexturedDrawable: public SceneGraph::Drawable3D {
     public:
         explicit TexturedDrawable(Object3D& object, Shaders::Phong& shader, GL::Mesh& mesh, GL::Texture2D& texture, SceneGraph::DrawableGroup3D& group)
@@ -78,46 +50,53 @@ class TexturedDrawable: public SceneGraph::Drawable3D {
 };
 
 void TexturedDrawable::draw(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera) {
-    m_shader
-        .setLightPosition(camera.cameraMatrix().transformPoint({-3.0f, 10.0f, 10.0f}))
-        .setTransformationMatrix(transformationMatrix)
-        .setNormalMatrix(transformationMatrix.normalMatrix())
-        .setProjectionMatrix(camera.projectionMatrix())
-        .bindDiffuseTexture(m_texture);
+    m_shader.setLightPosition(camera.cameraMatrix().transformPoint(Vector3(-50, 100, 100)))
+            .setTransformationMatrix(transformationMatrix)
+            .setNormalMatrix(transformationMatrix.normalMatrix())
+            .setProjectionMatrix(camera.projectionMatrix())
+            .bindDiffuseTexture(m_texture)
+            .bindAmbientTexture(m_texture);
     m_mesh.draw(m_shader);
 }
 
-Trade::MeshData3D createMeshData(const parser::SceneNode& node)
+Trade::MeshData3D createMeshData(const parser::Mesh& mesh, size_t meshPartIndex)
 {
-    assert(node.mesh.has_value());
-    auto& mesh = *node.mesh;
+    const parser::MeshPart meshPart = mesh.meshParts[meshPartIndex];
 
     std::vector<std::vector<Vector3>> positions(1);
-    std::vector<std::vector<Vector3>> normals(1);
+    std::vector<std::vector<Vector3>> normals;
     std::vector<std::vector<Vector2>> textureCoords2D(1);
-    std::vector<UnsignedInt> indices(mesh.indices.begin(), mesh.indices.end());
 
-    for (size_t i = 0; i < mesh.vertices.size(); ++i) {
+    for (size_t i = meshPart.vertexInterval.first; i < meshPart.vertexInterval.second; ++i) {
         const auto& v = mesh.vertices[i];
         positions[0].emplace_back(v.x, v.y, v.z);
     }
 
-    for (size_t i = 0; i < mesh.normals.size(); ++i) {
-        const auto& n = mesh.normals[i];
-        normals[0].emplace_back(n.x, n.y, n.z);
+    if (!mesh.normals.empty()) {
+        normals.resize(1);
+        for (size_t i = meshPart.vertexInterval.first; i < meshPart.vertexInterval.second; ++i) {
+            const auto& n = mesh.normals[i];
+            normals[0].emplace_back(n.x, n.y, n.z);
+        }
     }
 
-    for (size_t i = 0; i < mesh.uvs.size(); ++i) {
+    for (size_t i = meshPart.vertexInterval.first; i < meshPart.vertexInterval.second; ++i) {
         const auto& uv = mesh.uvs[i];
         textureCoords2D[0].emplace_back(uv.x, uv.y);
     }
 
+    int firstVertexIndex = meshPart.vertexInterval.first;
+    std::vector<UnsignedInt> indices;
+    for (size_t i = meshPart.indexInterval.first; i < meshPart.indexInterval.second; ++i) {
+        indices.push_back(mesh.indices[i] - firstVertexIndex);
+    }
+
     Trade::MeshData3D meshData(MeshPrimitive::Triangles,
-                                indices,
-                                positions,
-                                normals,
-                                textureCoords2D,
-                                {});
+                               std::move(indices),
+                               std::move(positions),
+                               std::move(normals),
+                               std::move(textureCoords2D),
+                               {});
     return meshData;
 }
 
@@ -147,17 +126,6 @@ void GLView::initializeGL() {
 
     m_manipulator.setParent(&m_scene);
 
-    m_coloredShader = std::make_unique<Shaders::Phong>();
-    m_coloredShader
-        ->setAmbientColor(0x555555_rgbf)
-        .setSpecularColor(0xffffff_rgbf)
-        .setShininess(80.0f);
-    m_texturedShader = std::make_unique<Shaders::Phong>(Shaders::Phong::Flag::DiffuseTexture);
-    m_texturedShader
-        ->setAmbientColor(0x111111_rgbf)
-        .setSpecularColor(0x111111_rgbf)
-        .setShininess(80.0f);
-
     std::unique_ptr<parser::SceneParser> scene = std::make_unique<parser::SceneParser>(m_sceneIndex.sirs[0], m_sceneIndex.bundleName);
     for (int i = 1; !scene->sceneRoot.has_value() && i < m_sceneIndex.sirs.size(); ++i)
        scene = std::make_unique<parser::SceneParser>(m_sceneIndex.sirs[i], m_sceneIndex.bundleName);
@@ -165,6 +133,13 @@ void GLView::initializeGL() {
 
     m_meshes = Containers::Array<Containers::Optional<GL::Mesh>>{scene->sceneRoot->numberOfMeshes()};
     m_textures = Containers::Array<Containers::Optional<Magnum::GL::Texture2D>>{scene->sceneRoot->numberOfMeshes()};
+
+    m_texturedShader = std::make_unique<Shaders::Phong>(Shaders::Phong::Flag::DiffuseTexture | Shaders::Phong::Flag::AmbientTexture);
+    m_texturedShader
+        ->setAmbientColor(0x6b6b6b_rgbf)
+        .setSpecularColor(0x000000_rgbf)
+        .setShininess(0.0f);
+
     setupScene(*scene->sceneRoot);
 
     m_time.start();
@@ -264,43 +239,41 @@ void GLView::setupScene(const parser::SceneNode& node, Object3D& parent, size_t&
     object->setTransformation(node.computeTransformationMatrix());
 
     if (node.mesh.has_value()) {
-        // Mesh
-        Trade::MeshData3D meshData = createMeshData(node);
-        if(!meshData.hasNormals() || meshData.primitive() != MeshPrimitive::Triangles) {
-            Warning{} << "Mesh isn't solid or doesn't have normals";
+        const parser::Mesh& mesh = *node.mesh;
+        for (size_t meshPartIndex = 0; meshPartIndex < mesh.meshParts.size(); ++meshPartIndex) {
+            // Geometry
+            Trade::MeshData3D meshData = createMeshData(mesh, meshPartIndex);
+            if(!meshData.hasNormals() || meshData.primitive() != MeshPrimitive::Triangles) {
+                Warning{} << "Mesh isn't solid or doesn't have normals";
+            }
+            m_meshes[meshIndex] = MeshTools::compile(meshData);
+
+            // Texture
+            PluginManager::Manager<Trade::AbstractImporter> manager;
+            Containers::Pointer<Trade::AbstractImporter> importer = manager.loadAndInstantiate("PngImporter");
+            assert(importer);
+            importer->openFile(mesh.meshParts[meshPartIndex].textures[0].string());
+            assert(importer->isOpened());
+
+            Containers::Optional<Trade::ImageData2D> imageData = importer->image2D(0);
+            GL::TextureFormat format;
+            if(imageData && imageData->format() == PixelFormat::RGB8Unorm)
+                format = GL::TextureFormat::RGB8;
+            else if(imageData && imageData->format() == PixelFormat::RGBA8Unorm)
+                format = GL::TextureFormat::RGBA8;
+
+            GL::Texture2D texture;
+            texture.setWrapping(GL::SamplerWrapping::MirroredRepeat)
+                   .setMagnificationFilter(GL::SamplerFilter::Linear)
+                   .setMinificationFilter(GL::SamplerFilter::Linear)
+                   .setStorage(1, GL::textureFormat(imageData->format()), imageData->size())
+                   .setSubImage(0, {}, *imageData);
+
+            m_textures[meshIndex] = std::move(texture);
+
+            new TexturedDrawable(*object, *m_texturedShader, *m_meshes[meshIndex], *m_textures[meshIndex], m_drawables);
+            ++meshIndex;
         }
-        m_meshes[meshIndex] = MeshTools::compile(meshData);
-
-        // Texture
-        assert(node.mesh.has_value());
-        auto& mesh = *node.mesh;
-
-        PluginManager::Manager<Trade::AbstractImporter> manager;
-        Containers::Pointer<Trade::AbstractImporter> importer = manager.loadAndInstantiate("PngImporter");
-        assert(importer);
-        importer->openFile(mesh.meshParts[0].textures[0].string());
-        assert(importer->isOpened());
-
-        Containers::Optional<Trade::ImageData2D> imageData = importer->image2D(0);
-        GL::TextureFormat format;
-        if(imageData && imageData->format() == PixelFormat::RGB8Unorm)
-            format = GL::TextureFormat::RGB8;
-        else if(imageData && imageData->format() == PixelFormat::RGBA8Unorm)
-            format = GL::TextureFormat::RGBA8;
-
-        GL::Texture2D texture;
-        texture
-            .setWrapping(GL::SamplerWrapping::MirroredRepeat)
-            .setMagnificationFilter(GL::SamplerFilter::Linear)
-            .setMinificationFilter(GL::SamplerFilter::Linear)
-            .setStorage(1, GL::textureFormat(imageData->format()), imageData->size())
-            .setSubImage(0, {}, *imageData);
-
-        m_textures[meshIndex] = std::move(texture);
-
-        //new ColoredDrawable(*object, *m_coloredShader, *m_meshes[meshIndex], 0xffffff_rgbf, m_drawables);
-        new TexturedDrawable(*object, *m_texturedShader, *m_meshes[meshIndex], *m_textures[meshIndex], m_drawables);
-        ++meshIndex;
     }
 
     if (!node.children.empty()) {

@@ -34,6 +34,8 @@ struct SceneNode
     Transofrmation computeTransformation() const;
 
     size_t numberOfMeshes() const;
+    size_t numberOfLights() const;
+
     void print() const;
 };
 

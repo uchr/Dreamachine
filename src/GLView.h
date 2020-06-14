@@ -50,8 +50,8 @@ class GLView: public QOpenGLWidget {
         Magnum::Platform::GLContext& m_context;
         Magnum::Vector2 m_previousCursorPosition;
 
-        std::unique_ptr<Magnum::Shaders::Phong> m_coloredShader;
         std::unique_ptr<Magnum::Shaders::Phong> m_texturedShader;
+
         Magnum::Containers::Array<Magnum::Containers::Optional<Magnum::GL::Mesh>> m_meshes;
         Magnum::Containers::Array<Magnum::Containers::Optional<Magnum::GL::Texture2D>> m_textures;
 
