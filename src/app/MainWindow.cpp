@@ -5,20 +5,21 @@
 
 #include <QMenuBar>
 #include <QGridLayout>
+#include <QListWidget>
 
 MainWindow::MainWindow(Magnum::Platform::GLContext& context, const parser::SceneIndex& sceneIndex)
-    : m_View(new View(context, this, sceneIndex))
+    : m_glView(new View(context, this, sceneIndex))
+    , m_list(new QListWidget(this))
 {
-    m_View->setFocusPolicy(Qt::FocusPolicy::StrongFocus);
+    m_glView->setFocusPolicy(Qt::FocusPolicy::StrongFocus);
 
     QMenu *fileMenu = menuBar()->addMenu("&File");
     QAction *open = new QAction("O&pen", fileMenu);
     fileMenu->addAction(open);
 
     QGridLayout* layout = new QGridLayout(this);
-    m_listView = new QListView(this);
-    layout->addWidget(m_listView, 0, 0);
-    layout->addWidget(m_View, 0, 1);
+    layout->addWidget(m_list, 0, 0);
+    layout->addWidget(m_glView, 0, 1);
 
     layout->setColumnStretch(0, 1);
     layout->setColumnStretch(1, 4);
@@ -28,7 +29,35 @@ MainWindow::MainWindow(Magnum::Platform::GLContext& context, const parser::Scene
     layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
 
+    fillList(sceneIndex);
+
     QWidget *window = new QWidget();
     window->setLayout(layout);
     setCentralWidget(window);
+
+    QObject::connect(m_list, &QListWidget::itemChanged,
+                     this, &MainWindow::onItemChanged);
+}
+
+void MainWindow::fillList(const parser::SceneIndex& sceneIndex)
+{
+    QStringList strList;
+    for (const auto& sir : sceneIndex.sirs)
+        strList.append(QString::fromStdString(sir.filename));
+    m_list->addItems(strList);
+
+    QListWidgetItem* item = 0;
+    for(int i = 0; i < m_list->count(); ++i) {
+        item = m_list->item(i);
+        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+        item->setCheckState(Qt::Unchecked);
+    }
+}
+
+void MainWindow::onItemChanged(QListWidgetItem *item)
+{
+    if(item->checkState() == Qt::Checked)
+        item->setBackground(QColor("#90A4AE"));
+    else
+        item->setBackground(QColor("#FFFFFF"));
 }
