@@ -42,10 +42,10 @@ void View::paintGL() {
     qtDefaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
 
     while(!m_meshToLoading.empty()) {
-        size_t meshIndex = m_meshToLoading.front();
+        size_t sirIndex = m_meshToLoading.back();
         m_meshToLoading.pop_back();
 
-        m_viewScene->load(meshIndex);
+        m_viewScene->load(sirIndex);
     }
 
     m_viewScene->draw();
