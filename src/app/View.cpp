@@ -18,8 +18,12 @@ View::View(Platform::GLContext& context, QWidget* parent, const parser::SceneInd
 
 View::~View() = default;
 
-void View::load(size_t meshIndex) {
-    m_meshToLoading.push_back(meshIndex);
+void View::load(size_t sirIndex) {
+    m_meshToLoading.push_back(sirIndex);
+}
+
+void View::unload(size_t sirIndex) {
+    m_meshToUnloading.push_back(sirIndex);
 }
 
 void View::initializeGL() {
@@ -46,6 +50,13 @@ void View::paintGL() {
         m_meshToLoading.pop_back();
 
         m_viewScene->load(sirIndex);
+    }
+
+    while(!m_meshToUnloading.empty()) {
+        size_t sirIndex = m_meshToUnloading.back();
+        m_meshToUnloading.pop_back();
+
+        m_viewScene->unload(sirIndex);
     }
 
     m_viewScene->draw();

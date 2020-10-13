@@ -7,6 +7,8 @@
 #include <QGridLayout>
 #include <QListWidget>
 
+#include <spdlog/spdlog.h>
+
 MainWindow::MainWindow(Magnum::Platform::GLContext& context, const parser::SceneIndex& sceneIndex)
     : m_glView(new View(context, this, sceneIndex))
     , m_list(new QListWidget(this))
@@ -14,7 +16,7 @@ MainWindow::MainWindow(Magnum::Platform::GLContext& context, const parser::Scene
     m_glView->setFocusPolicy(Qt::FocusPolicy::StrongFocus);
 
     QMenu *fileMenu = menuBar()->addMenu("&File");
-    QAction *open = new QAction("O&pen", fileMenu);
+    QAction* open = new QAction("O&pen", fileMenu);
     fileMenu->addAction(open);
 
     QGridLayout* layout = new QGridLayout(this);
@@ -31,7 +33,7 @@ MainWindow::MainWindow(Magnum::Platform::GLContext& context, const parser::Scene
 
     fillList(sceneIndex);
 
-    QWidget *window = new QWidget();
+    QWidget* window = new QWidget();
     window->setLayout(layout);
     setCentralWidget(window);
 
@@ -54,13 +56,16 @@ void MainWindow::fillList(const parser::SceneIndex& sceneIndex)
     }
 }
 
-void MainWindow::onItemChanged(QListWidgetItem *item)
+void MainWindow::onItemChanged(QListWidgetItem* item)
 {
-    if(item->checkState() == Qt::Checked) {
-        item->setBackground(QColor("#90A4AE"));
+    if(item->checkState() == Qt::Checked)
         m_glView->load(m_list->row(item));
-    }
-    else {
-        item->setBackground(QColor("#FFFFFF"));
-    }
+    else
+        m_glView->unload(m_list->row(item));
+
+    QObject::disconnect(m_list, &QListWidget::itemChanged,
+                        this, &MainWindow::onItemChanged);
+    item->setBackground(QColor(item->checkState() ? "#90A4AE" : "#FFFFFF"));
+    QObject::connect(m_list, &QListWidget::itemChanged,
+                     this, &MainWindow::onItemChanged);
 }

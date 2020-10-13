@@ -134,6 +134,11 @@ void ViewScene::load(size_t sirIndex) {
     m_drawables[sirIndex] = std::move(drawableData);
 }
 
+void ViewScene::unload(size_t sirIndex) {
+    if (m_drawables.contains(sirIndex))
+        m_drawables.erase(sirIndex);
+}
+
 void ViewScene::draw() {
     updateCameraTransform();
 

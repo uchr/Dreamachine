@@ -27,6 +27,8 @@ public:
     ViewScene(const parser::SceneIndex& sceneIndex, const InputManager& inputManager, const TimeManager& timeManager);
 
     void load(size_t sirIndex);
+    void unload(size_t sirIndex);
+    
     void draw();
     void setViewport(int width, int height);
     void rotateCamera(const Magnum::Vector2& mouseDelta);

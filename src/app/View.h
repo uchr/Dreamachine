@@ -22,7 +22,8 @@ public:
     explicit View(Magnum::Platform::GLContext& context, QWidget* parent, const parser::SceneIndex& sceneIndex);
     ~View();
 
-    void load(size_t meshIndex);
+    void load(size_t sirIndex);
+    void unload(size_t sirIndex);
 
 private:
     void initializeGL() override;
@@ -37,6 +38,7 @@ private:
     void keyReleaseEvent(QKeyEvent *event) override;
 
     std::vector<size_t> m_meshToLoading;
+    std::vector<size_t> m_meshToUnloading;
 
     std::unique_ptr<ViewScene> m_viewScene;
     InputManager m_inputManager;
