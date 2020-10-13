@@ -28,6 +28,7 @@ public:
 
 private:
     void fillList(const parser::SceneIndex& sceneIndex);
+    bool canLoadItem(const parser::SceneIndex& sceneIndex, size_t sirIndex);
 
     QListWidget* m_list;
     View* m_glView;

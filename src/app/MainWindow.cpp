@@ -2,6 +2,7 @@
 #include "View.h"
 
 #include <parser/SceneIndex.h>
+#include <parser/SceneParser.h>
 
 #include <QMenuBar>
 #include <QGridLayout>
@@ -41,21 +42,6 @@ MainWindow::MainWindow(Magnum::Platform::GLContext& context, const parser::Scene
                      this, &MainWindow::onItemChanged);
 }
 
-void MainWindow::fillList(const parser::SceneIndex& sceneIndex)
-{
-    QStringList strList;
-    for (const auto& sir : sceneIndex.sirs)
-        strList.append(QString::fromStdString(sir.filename));
-    m_list->addItems(strList);
-
-    QListWidgetItem* item = 0;
-    for(int i = 0; i < m_list->count(); ++i) {
-        item = m_list->item(i);
-        item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
-        item->setCheckState(Qt::Unchecked);
-    }
-}
-
 void MainWindow::onItemChanged(QListWidgetItem* item)
 {
     if(item->checkState() == Qt::Checked)
@@ -68,4 +54,28 @@ void MainWindow::onItemChanged(QListWidgetItem* item)
     item->setBackground(QColor(item->checkState() ? "#90A4AE" : "#FFFFFF"));
     QObject::connect(m_list, &QListWidget::itemChanged,
                      this, &MainWindow::onItemChanged);
+}
+
+void MainWindow::fillList(const parser::SceneIndex& sceneIndex)
+{
+    QStringList strList;
+    for (const auto& sir : sceneIndex.sirs)
+        strList.append(QString::fromStdString(sir.filename));
+    m_list->addItems(strList);
+
+    QListWidgetItem* item = 0;
+    for (int sirIndex = 0; sirIndex < m_list->count(); ++sirIndex) {
+        item = m_list->item(sirIndex);
+        if (canLoadItem(sceneIndex, sirIndex))
+            item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+        else
+            item->setFlags(Qt::NoItemFlags);
+        item->setCheckState(Qt::Unchecked);
+        item->setData(Qt::UserRole + 1, QVariant(sirIndex));
+    }
+}
+
+bool MainWindow::canLoadItem(const parser::SceneIndex& sceneIndex, size_t sirIndex) {
+    std::unique_ptr<parser::SceneParser> scene = std::make_unique<parser::SceneParser>(sceneIndex.sirs[sirIndex], sceneIndex.bundleName);
+    return scene->sceneRoot.has_value();
 }

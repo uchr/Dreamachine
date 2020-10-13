@@ -3,8 +3,8 @@
 #include "InputManager.h"
 #include "TimeManager.h"
 
-#include <parser/SceneParser.h>
 #include <parser/SceneIndex.h>
+#include <parser/SceneParser.h>
 
 #include <Magnum/ImageView.h>
 #include <Magnum/Mesh.h>
