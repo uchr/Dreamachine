@@ -1,3 +1,4 @@
+find_package(Qt5Core REQUIRED)
 find_package(Qt5Widgets REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(Corrade REQUIRED Main)
@@ -12,6 +13,9 @@ find_package(Magnum REQUIRED
     Trade
     Shaders
 )
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 if(MAGNUM_TARGET_GLES AND NOT MAGNUM_TARGET_DESKTOP_GLES)
     find_package(Magnum REQUIRED EglContext)
@@ -52,6 +56,11 @@ if (FBXSDK_FOUND)
   target_link_libraries(Dreamachine PRIVATE debug ${FBXSDK_LIBRARIES_DEBUG})
 endif (FBXSDK_FOUND)
 
+set_target_properties(Dreamachine
+    PROPERTIES
+    CMAKE_AUTOMOC ON
+)
+
 target_link_libraries(Dreamachine PRIVATE
     Corrade::Main
     Magnum::GLContext
@@ -62,6 +71,7 @@ target_link_libraries(Dreamachine PRIVATE
     Magnum::MeshTools
     Magnum::Trade
     Magnum::Primitives
+    Qt5::Core
     Qt5::Widgets
     fmt::fmt
     spdlog::spdlog

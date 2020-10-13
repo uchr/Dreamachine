@@ -7,7 +7,6 @@
 
 #pragma warning(push)
 #pragma warning(disable : 5054)
-#include <QListView>
 #include <QMouseEvent>
 #include <QOpenGLWidget>
 #pragma warning(pop)
@@ -23,6 +22,9 @@ public:
     explicit View(Magnum::Platform::GLContext& context, QWidget* parent, const parser::SceneIndex& sceneIndex);
     ~View();
 
+    void load(size_t sirIndex);
+    void unload(size_t sirIndex);
+
 private:
     void initializeGL() override;
     void paintGL() override;
@@ -34,6 +36,9 @@ private:
 
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
+
+    std::vector<size_t> m_meshToLoading;
+    std::vector<size_t> m_meshToUnloading;
 
     std::unique_ptr<ViewScene> m_viewScene;
     InputManager m_inputManager;

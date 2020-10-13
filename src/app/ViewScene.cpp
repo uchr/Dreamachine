@@ -3,8 +3,8 @@
 #include "InputManager.h"
 #include "TimeManager.h"
 
-#include <parser/SceneParser.h>
 #include <parser/SceneIndex.h>
+#include <parser/SceneParser.h>
 
 #include <Magnum/ImageView.h>
 #include <Magnum/Mesh.h>
@@ -17,6 +17,8 @@
 #include <Magnum/Trade/MeshData3D.h>
 #include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
+
+#include <spdlog/spdlog.h>
 
 #include <cassert>
 
@@ -111,25 +113,37 @@ ViewScene::ViewScene(const parser::SceneIndex& sceneIndex, const InputManager& i
 
     m_manipulator.setParent(&m_scene);
 
-    std::unique_ptr<parser::SceneParser> scene = std::make_unique<parser::SceneParser>(m_sceneIndex.sirs[0], m_sceneIndex.bundleName);
-    for (int i = 1; !scene->sceneRoot.has_value() && i < m_sceneIndex.sirs.size(); ++i)
-       scene = std::make_unique<parser::SceneParser>(m_sceneIndex.sirs[i], m_sceneIndex.bundleName);
-    assert(scene->sceneRoot.has_value());
-
-    m_meshes = Containers::Array<Containers::Optional<GL::Mesh>>{scene->sceneRoot->numberOfMeshes()};
-    m_textures = Containers::Array<Containers::Optional<Magnum::GL::Texture2D>>{scene->sceneRoot->numberOfMeshes()};
-
     m_texturedShader.setAmbientColor(0x5c5c5c_rgbf)
                     .setSpecularColor(0x000000_rgbf)
                     .setShininess(0.0f);
+}
 
-    setupScene(*scene->sceneRoot);
+void ViewScene::load(size_t sirIndex) {
+    if (m_drawables.contains(sirIndex))
+        return;
+    
+    std::unique_ptr<parser::SceneParser> scene = std::make_unique<parser::SceneParser>(m_sceneIndex.sirs[sirIndex], m_sceneIndex.bundleName);
+    if (!scene->sceneRoot.has_value())
+        return;
+
+    DrawableData drawableData;
+    drawableData.meshes = Containers::Array<Containers::Optional<GL::Mesh>>{scene->sceneRoot->numberOfMeshes()};
+    drawableData.textures = Containers::Array<Containers::Optional<Magnum::GL::Texture2D>>{scene->sceneRoot->numberOfMeshes()};
+
+    setupScene(*scene->sceneRoot, drawableData);
+    m_drawables[sirIndex] = std::move(drawableData);
+}
+
+void ViewScene::unload(size_t sirIndex) {
+    if (m_drawables.contains(sirIndex))
+        m_drawables.erase(sirIndex);
 }
 
 void ViewScene::draw() {
     updateCameraTransform();
 
-    m_camera->draw(m_drawables);
+    for (auto& it : m_drawables)
+        m_camera->draw(it.second.drawables);
 }
 
 void ViewScene::setViewport(int width, int height) {
@@ -166,13 +180,13 @@ void ViewScene::updateCameraTransform() {
     m_cameraObject.setTransformation(transfromation);
 }
 
-void ViewScene::setupScene(const parser::SceneNode& node)
+void ViewScene::setupScene(const parser::SceneNode& node, DrawableData& drawableData)
 {
     size_t meshIndex = 0;
-    setupScene(node, m_manipulator, meshIndex);
+    setupScene(node, m_manipulator, meshIndex, drawableData);
 }
 
-void ViewScene::setupScene(const parser::SceneNode& node, Object3D& parent, size_t& meshIndex) {
+void ViewScene::setupScene(const parser::SceneNode& node, Object3D& parent, size_t& meshIndex, DrawableData& drawableData) {
     auto* object = new Object3D{&parent};
 
     object->setTransformation(node.computeTransformationMatrix());
@@ -183,9 +197,9 @@ void ViewScene::setupScene(const parser::SceneNode& node, Object3D& parent, size
             // Geometry
             Trade::MeshData3D meshData = createMeshData(mesh, meshPartIndex);
             if(!meshData.hasNormals() || meshData.primitive() != MeshPrimitive::Triangles) {
-                Warning{} << "Mesh isn't solid or doesn't have normals";
+                spdlog::warn("Mesh-({}) isn't solid ({}) or doesn't have normals ({})", meshIndex, meshData.hasNormals(), meshData.primitive());
             }
-            m_meshes[meshIndex] = MeshTools::compile(meshData);
+            drawableData.meshes[meshIndex] = MeshTools::compile(meshData);
 
             // Texture
             PluginManager::Manager<Trade::AbstractImporter> manager;
@@ -208,15 +222,17 @@ void ViewScene::setupScene(const parser::SceneNode& node, Object3D& parent, size
                    .setStorage(1, GL::textureFormat(imageData->format()), imageData->size())
                    .setSubImage(0, {}, *imageData);
 
-            m_textures[meshIndex] = std::move(texture);
+            drawableData.textures[meshIndex] = std::move(texture);
 
-            new TexturedDrawable(*object, m_texturedShader, *m_meshes[meshIndex], *m_textures[meshIndex], m_drawables);
+            new TexturedDrawable(*object, m_texturedShader, 
+                                 *drawableData.meshes[meshIndex], *drawableData.textures[meshIndex],
+                                 drawableData.drawables);
             ++meshIndex;
         }
     }
 
     if (!node.children.empty()) {
         for (size_t i = 0; i < node.children.size(); ++i)
-            setupScene(node.children[i], *object, meshIndex);
+            setupScene(node.children[i], *object, meshIndex, drawableData);
     }
 }
