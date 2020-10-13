@@ -18,6 +18,8 @@
 #include <Magnum/Trade/MeshObjectData3D.h>
 #include <Magnum/Trade/PhongMaterialData.h>
 
+#include <spdlog/spdlog.h>
+
 #include <cassert>
 
 using namespace Magnum;
@@ -111,23 +113,30 @@ ViewScene::ViewScene(const parser::SceneIndex& sceneIndex, const InputManager& i
 
     m_manipulator.setParent(&m_scene);
 
-    std::unique_ptr<parser::SceneParser> scene = std::make_unique<parser::SceneParser>(m_sceneIndex.sirs[0], m_sceneIndex.bundleName);
-    for (int i = 1; !scene->sceneRoot.has_value() && i < m_sceneIndex.sirs.size(); ++i)
-       scene = std::make_unique<parser::SceneParser>(m_sceneIndex.sirs[i], m_sceneIndex.bundleName);
+    m_texturedShader.setAmbientColor(0x5c5c5c_rgbf)
+                    .setSpecularColor(0x000000_rgbf)
+                    .setShininess(0.0f);
+}
+
+void ViewScene::load(size_t meshIndex) {
+    if (m_loadedMeshes.contains(meshIndex))
+        return;
+    
+    std::unique_ptr<parser::SceneParser> scene = std::make_unique<parser::SceneParser>(m_sceneIndex.sirs[meshIndex], m_sceneIndex.bundleName);
     assert(scene->sceneRoot.has_value());
 
     m_meshes = Containers::Array<Containers::Optional<GL::Mesh>>{scene->sceneRoot->numberOfMeshes()};
     m_textures = Containers::Array<Containers::Optional<Magnum::GL::Texture2D>>{scene->sceneRoot->numberOfMeshes()};
 
-    m_texturedShader.setAmbientColor(0x5c5c5c_rgbf)
-                    .setSpecularColor(0x000000_rgbf)
-                    .setShininess(0.0f);
-
     setupScene(*scene->sceneRoot);
+    m_loadedMeshes[meshIndex] = true;
 }
 
 void ViewScene::draw() {
     updateCameraTransform();
+
+    if (m_drawables.size() == 0)
+        return;
 
     m_camera->draw(m_drawables);
 }
@@ -183,7 +192,7 @@ void ViewScene::setupScene(const parser::SceneNode& node, Object3D& parent, size
             // Geometry
             Trade::MeshData3D meshData = createMeshData(mesh, meshPartIndex);
             if(!meshData.hasNormals() || meshData.primitive() != MeshPrimitive::Triangles) {
-                Warning{} << "Mesh isn't solid or doesn't have normals";
+                spdlog::warn("Mesh-({}) isn't solid ({}) or doesn't have normals ({})", meshIndex, meshData.hasNormals(), meshData.primitive());
             }
             m_meshes[meshIndex] = MeshTools::compile(meshData);
 

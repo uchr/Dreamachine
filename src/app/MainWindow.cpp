@@ -56,8 +56,11 @@ void MainWindow::fillList(const parser::SceneIndex& sceneIndex)
 
 void MainWindow::onItemChanged(QListWidgetItem *item)
 {
-    if(item->checkState() == Qt::Checked)
+    if(item->checkState() == Qt::Checked) {
         item->setBackground(QColor("#90A4AE"));
-    else
+        m_glView->load(m_list->row(item));
+    }
+    else {
         item->setBackground(QColor("#FFFFFF"));
+    }
 }

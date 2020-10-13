@@ -26,6 +26,7 @@ class ViewScene {
 public:
     ViewScene(const parser::SceneIndex& sceneIndex, const InputManager& inputManager, const TimeManager& timeManager);
 
+    void load(size_t meshIndex);
     void draw();
     void setViewport(int width, int height);
     void rotateCamera(const Magnum::Vector2& mouseDelta);
@@ -53,6 +54,8 @@ private:
     Magnum::SceneGraph::DrawableGroup3D m_drawables;
 
     CameraTransform m_cameraTransform;
+
+    std::unordered_map<int, bool> m_loadedMeshes;
 
     const TimeManager& m_timeManager;
     const InputManager& m_inputManager;

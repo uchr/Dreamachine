@@ -12,8 +12,8 @@ namespace parser
 {
 struct SceneIndex;
 }
+class View;
 
-QT_FORWARD_DECLARE_CLASS(QOpenGLWidget)
 QT_FORWARD_DECLARE_CLASS(QListWidget)
 QT_FORWARD_DECLARE_CLASS(QListWidgetItem)
 
@@ -30,5 +30,5 @@ private:
     void fillList(const parser::SceneIndex& sceneIndex);
 
     QListWidget* m_list;
-    QOpenGLWidget* m_glView;
+    View* m_glView;
 };

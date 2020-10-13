@@ -4,6 +4,8 @@
 #include <Magnum/GL/Renderer.h>
 #include <Magnum/GL/Framebuffer.h>
 
+#include <spdlog/spdlog.h>
+
 using namespace Magnum;
 using namespace Math::Literals;
 
@@ -15,6 +17,10 @@ View::View(Platform::GLContext& context, QWidget* parent, const parser::SceneInd
 }
 
 View::~View() = default;
+
+void View::load(size_t meshIndex) {
+    m_meshToLoading.push_back(meshIndex);
+}
 
 void View::initializeGL() {
     m_context.create();
@@ -34,6 +40,13 @@ void View::paintGL() {
     GL::Context::current().resetState(GL::Context::State::ExitExternal);
     auto qtDefaultFramebuffer = GL::Framebuffer::wrap(defaultFramebufferObject(), {{}, {width(), height()}});
     qtDefaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
+
+    while(!m_meshToLoading.empty()) {
+        size_t meshIndex = m_meshToLoading.front();
+        m_meshToLoading.pop_back();
+
+        m_viewScene->load(meshIndex);
+    }
 
     m_viewScene->draw();
     m_timeManager.update();
