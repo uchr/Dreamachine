@@ -54,16 +54,12 @@ SharkParser::SharkParser(const std::filesystem::path& path) {
     BinReaderMmap binReader(path);
     if (binReader.readStringLine() != magic || binReader.readStringLine() != "2x4")
         throw std::exception("shark3d binary magic wrong");
-    m_root = new SharkNodeValue(readSub(binReader), "root");
-}
-
-SharkParser::~SharkParser() {
-    delete m_root;
+    m_root.reset(new SharkNodeValue(readSub(binReader), "root"));
 }
 
 SceneIndex SharkParser::parseScene(const std::string& bundleName) {
     std::vector<std::string> sirs = getSir(m_root->goSub("actor_param/child_param/children"));
-    std::vector<std::string> bprs = getBpr(m_root);
+    std::vector<std::string> bprs = getBpr(m_root.get());
 
     SceneIndex sceneIndex;
     sceneIndex.bundleName = bundleName;
@@ -78,7 +74,7 @@ SceneIndex SharkParser::parseScene(const std::string& bundleName) {
 
 SharkNode* SharkParser::getRoot() const
 {
-    return m_root;
+    return m_root.get();
 }
 
 std::string SharkParser::indexString(BinReader& binReader)

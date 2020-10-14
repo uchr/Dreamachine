@@ -11,6 +11,7 @@
 namespace parser
 {
 struct SceneIndex;
+struct SceneNode;
 }
 class View;
 
@@ -25,11 +26,16 @@ public:
     MainWindow(Magnum::Platform::GLContext& context, const parser::SceneIndex& sceneIndex);
 
     void onItemChanged(QListWidgetItem* item);
+    void doExportAsSingleMesh();
+    void doExportAsMultipleMeshes();
 
 private:
-    void fillList(const parser::SceneIndex& sceneIndex);
-    bool canLoadItem(const parser::SceneIndex& sceneIndex, size_t sirIndex);
+    void fillList();
+    bool canLoadItem(size_t sirIndex);
+    std::vector<parser::SceneNode> loadedMeshes();
 
     QListWidget* m_list;
     View* m_glView;
+
+    const parser::SceneIndex& m_sceneIndex;
 };

@@ -196,9 +196,6 @@ void ViewScene::setupScene(const parser::SceneNode& node, Object3D& parent, size
         for (size_t meshPartIndex = 0; meshPartIndex < mesh.meshParts.size(); ++meshPartIndex) {
             // Geometry
             Trade::MeshData3D meshData = createMeshData(mesh, meshPartIndex);
-            if(!meshData.hasNormals() || meshData.primitive() != MeshPrimitive::Triangles) {
-                spdlog::warn("Mesh-({}) isn't solid ({}) or doesn't have normals ({})", meshIndex, meshData.hasNormals(), meshData.primitive());
-            }
             drawableData.meshes[meshIndex] = MeshTools::compile(meshData);
 
             // Texture

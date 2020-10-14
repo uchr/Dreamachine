@@ -41,8 +41,8 @@ int main(int argc, char** argv) {
         spdlog::set_level(spdlog::level::debug);
 
     std::filesystem::path sceneSDRPath = "data/generated/locations/" + bundleName + ".cdr";
-    SharkParser sceneSDRParser(sceneSDRPath);
-    SceneIndex sceneIndex = sceneSDRParser.parseScene(bundleName);
+    SharkParser sceneSharkParser(sceneSDRPath);
+    SceneIndex sceneIndex = sceneSharkParser.parseScene(bundleName);
 
     if (isExportMode) {
         HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
@@ -66,7 +66,8 @@ int main(int argc, char** argv) {
                 spdlog::warn("SIR: '{}' not parsed", sir.filename);
 
             if (scene.sceneRoot.has_value()) {
-                auto isExtracted = exportScene(*scene.sceneRoot, bundleName, sir.filename);
+                std::filesystem::path path = std::filesystem::path("meshes") / bundleName;
+                auto isExtracted = exportScene({*scene.sceneRoot}, path, ExportMode::Multiple);
                 if (!isExtracted)
                     spdlog::error("Scene: '{}' not extracted", sir.filename);
             }
