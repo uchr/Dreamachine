@@ -16,7 +16,6 @@ class BinReader;
 class SharkParser {
 public:
     SharkParser(const std::filesystem::path& path);
-    ~SharkParser();
 
     SceneIndex parseScene(const std::string& bundleName); // TODO: Move it outside SharkParser
 
@@ -28,7 +27,7 @@ private:
 
     int m_stringCount = 0;
 
-    SharkNode* m_root;
+    std::unique_ptr<SharkNode> m_root;
 
     std::unordered_map<int, std::string> m_stringTable;
 

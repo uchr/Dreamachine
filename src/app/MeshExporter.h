@@ -7,4 +7,9 @@ namespace parser
 struct SceneNode;
 }
 
-bool exportScene(const parser::SceneNode& root, const std::string& bundleName, const std::string& meshName);
+enum class ExportMode {
+    Single,
+    Multiple
+};
+
+bool exportScene(const std::vector<parser::SceneNode>& parsedSceneNodes, const std::filesystem::path& outputPath, ExportMode exportMode);

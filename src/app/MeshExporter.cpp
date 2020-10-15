@@ -7,11 +7,10 @@
 #include <fbxsdk.h>
 #include <spdlog/spdlog.h>
 
-void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const parser::SceneNode& node)
-{
+void prepareScene(FbxManager* fbxManager, FbxScene* fbxScene, FbxNode* fbxSceneNode, const parser::SceneNode& parsedSceneNode, bool isRootNode = false) {
     auto createTexture = [&](const std::filesystem::path& path) {
         const std::string textureName = Utils::getFilenameWithoutExtension(path);
-        FbxFileTexture* texture = FbxFileTexture::Create(manager, textureName.c_str());
+        FbxFileTexture* texture = FbxFileTexture::Create(fbxManager, textureName.c_str());
 
         texture->SetFileName(path.string().c_str());
         texture->SetName(textureName.c_str());
@@ -29,7 +28,7 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
 
     auto createMaterial = [&](const parser::MeshPart& meshPart) {
         const std::string materialName = Utils::getFilenameWithoutExtension(meshPart.textures[0]);
-        FbxSurfacePhong* material = FbxSurfacePhong::Create(manager, materialName.c_str());
+        FbxSurfacePhong* material = FbxSurfacePhong::Create(fbxManager, materialName.c_str());
         material->Ambient.Set(FbxDouble3(0.8, 0.8, 0.8));
 
         const auto& diffuseTexturePath = meshPart.textures[0];
@@ -54,23 +53,23 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
         return material;
     };
 
-    FbxNode* fbxMeshNode = FbxNode::Create(manager, node.name.c_str());
-    parent->AddChild(fbxMeshNode);
+    FbxNode* fbxMeshNode = FbxNode::Create(fbxManager, parsedSceneNode.name.c_str());
+    fbxSceneNode->AddChild(fbxMeshNode);
 
     const double rad2Deg = 57.2958;
-    parser::Transofrmation transformation = node.computeTransformation();
+    parser::Transofrmation transformation = parsedSceneNode.computeTransformation();
     fbxMeshNode->LclTranslation.Set(FbxVector4(transformation.translation.x, transformation.translation.y, transformation.translation.z));
     fbxMeshNode->LclRotation.Set(FbxVector4(transformation.rotation.x * rad2Deg, transformation.rotation.y * rad2Deg, transformation.rotation.z * rad2Deg));
     fbxMeshNode->LclScaling.Set(FbxVector4(transformation.scale, transformation.scale, transformation.scale));
 
-    if (node.name == "scene_root") {
+    if (isRootNode) {
         fbxMeshNode->LclRotation.Set(FbxVector4(-90, 0, 0));
         fbxMeshNode->LclScaling.Set(FbxVector4(50, 50, 50));
     }
 
-    if (node.mesh.has_value() && !node.mesh->meshParts.empty() && !node.mesh->meshParts[0].textures.empty()) {
-        const auto& mesh = *node.mesh;
-        FbxMesh* fbxMesh = FbxMesh::Create(manager, node.name.c_str());
+    if (parsedSceneNode.mesh.has_value() && !parsedSceneNode.mesh->meshParts.empty() && !parsedSceneNode.mesh->meshParts[0].textures.empty()) {
+        const auto& mesh = *parsedSceneNode.mesh;
+        FbxMesh* fbxMesh = FbxMesh::Create(fbxManager, parsedSceneNode.name.c_str());
         fbxMesh->InitControlPoints(mesh.vertices.size());
         FbxVector4* controlPoints = fbxMesh->GetControlPoints();
 
@@ -155,56 +154,56 @@ void createScene(FbxManager* manager, FbxScene* scene, FbxNode* parent, const pa
         fbxMeshNode->SetShadingMode(FbxNode::eTextureShading);
     }
 
-    if (node.light.has_value()) {
-        const auto& light = *node.light;
-        FbxNode* fbxLightNode = FbxNode::Create(scene, "PointLightNode");
+    if (parsedSceneNode.light.has_value()) {
+        const auto& light = *parsedSceneNode.light;
+        FbxNode* fbxLightNode = FbxNode::Create(fbxScene, "PointLightNode");
         fbxMeshNode->AddChild(fbxLightNode);
 
-        FbxLight* fbxLight = FbxLight::Create(scene, "PointLight");
+        FbxLight* fbxLight = FbxLight::Create(fbxScene, "PointLight");
         fbxLightNode->SetNodeAttribute(fbxLight);
         fbxLight->LightType.Set(FbxLight::ePoint);
         fbxLight->Color.Set(FbxDouble3(light.color.x / 255.0, light.color.y / 255.0, light.color.z / 255.0));
         fbxLight->Intensity.Set(light.intencity);
     }
 
-    if (!node.children.empty()) {
-        for (size_t i = 0; i < node.children.size(); ++i)
-            createScene(manager, scene, fbxMeshNode, node.children[i]);
+    if (!parsedSceneNode.children.empty()) {
+        for (size_t i = 0; i < parsedSceneNode.children.size(); ++i)
+            prepareScene(fbxManager, fbxScene, fbxMeshNode, parsedSceneNode.children[i]);
     }
 }
 
-bool saveScene(FbxManager* manager, FbxDocument* scene, const std::string& filename, int fileFormat)
+bool saveScene(FbxManager* fbxManager, FbxScene* fbxScene, const std::string& outputPath, int fileFormat)
 {
-    FbxExporter* exporter = FbxExporter::Create(manager, "");
+    FbxExporter* exporter = FbxExporter::Create(fbxManager, "");
 
-    if (!exporter->Initialize(filename.c_str(), fileFormat, manager->GetIOSettings()))
+    if (!exporter->Initialize(outputPath.c_str(), fileFormat, fbxManager->GetIOSettings()))
     {
         spdlog::error("Call to FbxExporter::Initialize() failed.");
         spdlog::error("Error returned: {} \n\n", exporter->GetStatus().GetErrorString());
         return false;
     }
 
-    bool status = exporter->Export(scene);
+    bool status = exporter->Export(fbxScene);
     exporter->Destroy();
     return status;
 }
 
-bool exportScene(const parser::SceneNode& root, const std::string& bundleName, const std::string& meshName) {
-    std::filesystem::path path = std::filesystem::path("meshes") / bundleName / meshName / (meshName + ".fbx");
-    std::filesystem::create_directories(path.parent_path());
+bool exportScene(const std::vector<parser::SceneNode>& parsedSceneNodes, const std::filesystem::path& outputPath, ExportMode exportMode) {
+    if (parsedSceneNodes.empty())
+        return false;
 
-    FbxManager* manager = FbxManager::Create();
-    if (!manager)
+    FbxManager* fbxManager = FbxManager::Create();
+    if (!fbxManager)
     {
         spdlog::error("Error: Unable to create FBX Manager!");
         return false;
     }
     else {
-        spdlog::debug("Autodesk FBX SDK version {}", manager->GetVersion());
+        spdlog::debug("Autodesk FBX SDK version {}", fbxManager->GetVersion());
     }
 
-    FbxIOSettings* ios = FbxIOSettings::Create(manager, IOSROOT);
-    manager->SetIOSettings(ios);
+    FbxIOSettings* ios = FbxIOSettings::Create(fbxManager, IOSROOT);
+    fbxManager->SetIOSettings(ios);
 
     ios->SetBoolProp(EXP_FBX_MATERIAL, true);
     ios->SetBoolProp(EXP_FBX_TEXTURE, true);
@@ -214,18 +213,32 @@ bool exportScene(const parser::SceneNode& root, const std::string& bundleName, c
     ios->SetBoolProp(EXP_FBX_GLOBAL_SETTINGS, true);
 
     FbxString applicationPath = FbxGetApplicationDirectory();
-    manager->LoadPluginsDirectory(applicationPath.Buffer());
+    fbxManager->LoadPluginsDirectory(applicationPath.Buffer());
 
-    FbxScene* scene = FbxScene::Create(manager, "Dreamachine Scene");
-    if (!scene)
+    FbxScene* fbxScene = FbxScene::Create(fbxManager, "Dreamachine Scene");
+    if (!fbxScene)
     {
         spdlog::error("Error: Unable to create FBX scene!");
         return false;
     }
 
-    createScene(manager, scene, scene->GetRootNode(), root);
-    saveScene(manager, scene, path.string().c_str(), -1);
+    if (exportMode == ExportMode::Single) {
+        for (const auto& parsedSceneRoot : parsedSceneNodes)
+            prepareScene(fbxManager, fbxScene, fbxScene->GetRootNode(), parsedSceneRoot, true);
 
-    manager->Destroy();
+        std::filesystem::create_directories(outputPath.parent_path());
+        saveScene(fbxManager, fbxScene, outputPath.string().c_str(), -1);
+    }
+    else if (exportMode == ExportMode::Multiple) {
+        std::filesystem::create_directories(outputPath);
+        for (const auto& parsedSceneRoot : parsedSceneNodes) {
+            prepareScene(fbxManager, fbxScene, fbxScene->GetRootNode(), parsedSceneRoot, true);
+
+            auto meshPath = outputPath / (parsedSceneRoot.name + ".fbx");
+            saveScene(fbxManager, fbxScene, meshPath.string().c_str(), -1);
+        }
+    }
+
+    fbxManager->Destroy();
     return true;
 }

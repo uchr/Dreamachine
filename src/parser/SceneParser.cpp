@@ -144,8 +144,8 @@ void SceneParser::addScene(const std::filesystem::path& sirPath) {
 
 std::optional<SceneNode> SceneParser::loadSir(const std::filesystem::path& sirPath) {
     spdlog::info("Parsing SIR {}...", sirPath.string());
-    SharkParser cdrParser(sirPath.string());
-    SharkNode* root = cdrParser.getRoot()->goSub("data/root");
+    SharkParser sharkParser(sirPath.string());
+    SharkNode* root = sharkParser.getRoot()->goSub("data/root");
     if (root == nullptr)
     {
         spdlog::error("{} didn't contain 'data/root'", sirPath.string());
@@ -155,7 +155,11 @@ std::optional<SceneNode> SceneParser::loadSir(const std::filesystem::path& sirPa
     auto smrPath = sirPath;
     smrPath.replace_extension(".smr");
 
-    return loadHierarchy(root, smrPath.string(), m_sirEntry.filename);
+    auto parsedSir = loadHierarchy(root, smrPath.string(), m_sirEntry.filename);
+    if (parsedSir.has_value())
+        parsedSir->name = m_sirEntry.filename;
+
+    return parsedSir;
 }
 
 std::optional<SceneNode> SceneParser::loadHierarchy(SharkNode* node, const std::string& smrFile, const std::filesystem::path& hierarchyPath) {
