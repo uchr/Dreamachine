@@ -19,11 +19,13 @@ class ViewScene;
 
 class View: public QOpenGLWidget {
 public:
-    explicit View(Magnum::Platform::GLContext& context, QWidget* parent, const parser::SceneIndex& sceneIndex);
+    explicit View(Magnum::Platform::GLContext& context, QWidget* parent);
     ~View();
 
     void load(size_t sirIndex);
     void unload(size_t sirIndex);
+
+    void setSceneIndex(parser::SceneIndex* sceneIndex);
 
 private:
     void initializeGL() override;
@@ -46,5 +48,5 @@ private:
 
     Magnum::Platform::GLContext& m_context;
 
-    const parser::SceneIndex& m_sceneIndex;
+    parser::SceneIndex* m_sceneIndex = nullptr;
 };
