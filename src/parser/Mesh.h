@@ -2,13 +2,12 @@
 
 #include "Geometry.h"
 
-#include <vector>
-#include <string>
 #include <filesystem>
 #include <optional>
+#include <string>
+#include <vector>
 
-namespace parser
-{
+namespace parser {
 
 struct MeshPart {
     std::pair<int, int> indexInterval;
@@ -17,8 +16,7 @@ struct MeshPart {
     std::optional<std::filesystem::path> alphaTexture;
 };
 
-struct Mesh
-{
+struct Mesh {
     std::string name;
 
     std::vector<Vector3> vertices;
@@ -31,4 +29,4 @@ struct Mesh
     bool smoothness = false;
 };
 
-}
+} // namespace parser

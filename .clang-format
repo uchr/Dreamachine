@@ -1,0 +1,44 @@
+# https://releases.llvm.org/11.0.0/tools/clang/docs/ClangFormatStyleOptions.html
+Language: Cpp
+BasedOnStyle: llvm
+AccessModifierOffset: -4
+AllowAllArgumentsOnNextLine: false
+AllowAllConstructorInitializersOnNextLine: false
+AllowAllConstructorInitializersOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: All
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BreakConstructorInitializersBeforeComma: true
+ColumnLimit: 140
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+ConstructorInitializerIndentWidth: 8
+Cpp11BracedListStyle: true
+IncludeBlocks: Preserve
+IndentCaseLabels: false
+IndentWidth: 4
+NamespaceIndentation: None
+PointerBindsToType: true
+Standard: Cpp11
+TabWidth: 4
+UseTab: Never
+BreakBeforeBraces: Custom
+BraceWrapping:
+    AfterEnum: false
+    AfterStruct: false
+    AfterClass: false
+    AfterCaseLabel: false
+    AfterControlStatement: Never
+    AfterFunction: false
+    AfterNamespace: false
+    BeforeCatch: true
+    BeforeElse: true
+    BeforeLambdaBody: false
+    BeforeWhile: false

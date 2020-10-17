@@ -3,7 +3,10 @@
 #include <Magnum/Magnum.h>
 #include <Magnum/Math/Vector2.h>
 
+#pragma warning(push)
+#pragma warning(disable : 5054)
 #include <QKeyEvent>
+#pragma warning(pop)
 
 #include <unordered_set>
 

@@ -7,8 +7,7 @@
 
 #include <fstream>
 
-namespace parser
-{
+namespace parser {
 
 std::string BinReader::readStringLine() {
     std::string result;
@@ -30,27 +29,23 @@ std::vector<char> BinReader::readChars(size_t length) {
     return result;
 }
 
-int64_t BinReader::readSharkNum()
-{
+int64_t BinReader::readSharkNum() {
     int64_t num = 0;
     int n, shift = 0;
-    do
-    {
+    do {
         n = readByte();
         num |= (int64_t)(n & 0x7f) << shift;
         shift += 7;
         if (shift >= 62)
             throw std::exception("shark numeric overflow");
     } while ((n & 0x80) != 0);
-    if ((n & 0x40) != 0)
-    {
-        num = num - ((int64_t) 1 << shift);
+    if ((n & 0x40) != 0) {
+        num = num - ((int64_t)1 << shift);
     }
     return num;
 }
 
-float BinReader::readEndianFloat()
-{
+float BinReader::readEndianFloat() {
     byte arr[4];
     for (int i = 0; i < 4; i++)
         arr[3 - i] = readByte();
@@ -83,29 +78,24 @@ void BinReader::checkPosition(size_t expectPosition) {
         throw std::exception("Not expected pos");
 }
 
-void BinReader::setZeroPos(size_t pos)
-{
+void BinReader::setZeroPos(size_t pos) {
     m_posZero = pos;
 }
 
-void BinReader::resetZeroPos()
-{
+void BinReader::resetZeroPos() {
     m_posZero = m_pos;
 }
 
-bool BinReader::IsPos(size_t npos)
-{
+bool BinReader::IsPos(size_t npos) {
     size_t pos = npos == 0 ? 0 : npos + m_posZero;
     return pos == m_pos;
 }
 
-void BinReader::Assert(size_t npos)
-{
-    Assert0 (npos == 0 ? 0 : npos + m_posZero);
+void BinReader::Assert(size_t npos) {
+    Assert0(npos == 0 ? 0 : npos + m_posZero);
 }
 
-void BinReader::Assert0(size_t pos)
-{
+void BinReader::Assert0(size_t pos) {
     if (pos > 0 && m_pos != pos)
         throw new std::runtime_error(std::string("m_posZero: ") + std::to_string(m_posZero) + " pos: " + std::to_string(pos));
 }
@@ -146,9 +136,8 @@ bool BinReaderMmap::isOpen() const {
 }
 
 BinReaderMemory::BinReaderMemory(const char* data, size_t size)
-    : m_data(data)
-    , m_size(size)
-{
+        : m_data(data)
+        , m_size(size) {
     assert(data != nullptr);
     assert(size > 0);
 }
@@ -165,4 +154,4 @@ size_t BinReaderMemory::size() const {
     return m_size;
 }
 
-}
+} // namespace parser

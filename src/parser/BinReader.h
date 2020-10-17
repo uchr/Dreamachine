@@ -4,20 +4,17 @@
 #include <string>
 
 namespace memory_mapped_file {
-    class read_only_mmf;
+class read_only_mmf;
 }
 
-namespace parser
-{
+namespace parser {
 
 using byte = unsigned char;
 
-class BinReader
-{
+class BinReader {
 public:
     template <typename T>
-    T read()
-    {
+    T read() {
         T value = *reinterpret_cast<T*>(data() + m_pos);
         m_pos += sizeof(T);
         return value;
@@ -96,4 +93,4 @@ private:
     size_t m_size;
 };
 
-}
+} // namespace parser

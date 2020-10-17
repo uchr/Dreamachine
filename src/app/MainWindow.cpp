@@ -8,19 +8,21 @@
 #include <parser/SceneParser.h>
 #include <parser/SharkParser.h>
 
+#pragma warning(push)
+#pragma warning(disable : 5054)
 #include <QFileDialog>
 #include <QGridLayout>
-#include <QListWidget>
 #include <QLabel>
+#include <QListWidget>
 #include <QMenuBar>
+#pragma warning(pop)
 
 #include <spdlog/spdlog.h>
 
 MainWindow::MainWindow(Magnum::Platform::GLContext& context)
-    : m_glView(new View(context, this))
-    , m_list(new QListWidget(this))
-    , m_bundleListWindow(new BundleListWindow(this))
-{
+        : m_glView(new View(context, this))
+        , m_list(new QListWidget(this))
+        , m_bundleListWindow(new BundleListWindow(this)) {
     m_glView->setFocusPolicy(Qt::FocusPolicy::StrongFocus);
 
     QMenu* fileMenu = menuBar()->addMenu("File");
@@ -29,7 +31,7 @@ MainWindow::MainWindow(Magnum::Platform::GLContext& context)
     connect(openAction, &QAction::triggered, this, &MainWindow::showSelectBundleWindow);
 
     fileMenu->addSeparator();
-    
+
     QAction* exportAsSingleMeshAction = new QAction("Export as single mesh...", fileMenu);
     fileMenu->addAction(exportAsSingleMeshAction);
     connect(exportAsSingleMeshAction, &QAction::triggered, this, &MainWindow::doExportAsSingleMesh);
@@ -60,16 +62,14 @@ MainWindow::MainWindow(Magnum::Platform::GLContext& context)
 MainWindow::~MainWindow() = default;
 
 void MainWindow::onItemChanged(QListWidgetItem* item) {
-    if(item->checkState() == Qt::Checked)
+    if (item->checkState() == Qt::Checked)
         m_glView->load(m_list->row(item));
     else
         m_glView->unload(m_list->row(item));
 
-    QObject::disconnect(m_list, &QListWidget::itemChanged,
-                        this, &MainWindow::onItemChanged);
+    QObject::disconnect(m_list, &QListWidget::itemChanged, this, &MainWindow::onItemChanged);
     item->setBackground(QColor(item->checkState() ? "#90A4AE" : "#FFFFFF"));
-    QObject::connect(m_list, &QListWidget::itemChanged,
-                     this, &MainWindow::onItemChanged);
+    QObject::connect(m_list, &QListWidget::itemChanged, this, &MainWindow::onItemChanged);
 }
 
 void MainWindow::doExportAsSingleMesh() {
@@ -125,7 +125,8 @@ void MainWindow::fillList() {
 }
 
 bool MainWindow::canLoadItem(size_t sirIndex) {
-    std::unique_ptr<parser::SceneParser> scene = std::make_unique<parser::SceneParser>(m_sceneIndex->sirs[sirIndex], m_sceneIndex->bundleName);
+    std::unique_ptr<parser::SceneParser> scene =
+        std::make_unique<parser::SceneParser>(m_sceneIndex->sirs[sirIndex], m_sceneIndex->bundleName);
     return scene->sceneRoot.has_value();
 }
 
@@ -143,7 +144,7 @@ std::vector<parser::SceneNode> MainWindow::loadedMeshes() {
 
         if (scene.sceneRoot.has_value())
             spdlog::info("SIR: '{}' parsed", sir.filename);
-        else 
+        else
             spdlog::warn("SIR: '{}' not parsed", sir.filename);
 
         if (scene.sceneRoot.has_value())

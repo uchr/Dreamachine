@@ -16,7 +16,7 @@ void InputManager::keyRelease(int key) {
 }
 
 Magnum::Vector2 InputManager::mouseDelta(int viewportWidth, int viewportHeight) const {
-    return (m_mouseCur - m_mousePrev) / Vector2(viewportWidth,viewportHeight);
+    return (m_mouseCur - m_mousePrev) / Vector2(viewportWidth, viewportHeight);
 }
 
 void InputManager::mouseMoveStart(int x, int y) {

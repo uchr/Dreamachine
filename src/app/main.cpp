@@ -2,19 +2,22 @@
 #include "MeshExporter.h"
 
 #include <parser/PAKParser.h>
-#include <parser/SharkParser.h>
 #include <parser/SceneParser.h>
+#include <parser/SharkParser.h>
 
 #include <CLI/CLI.hpp>
 #include <spdlog/spdlog.h>
 
+#pragma warning(push)
+#pragma warning(disable : 5054)
 #include <QSurfaceFormat>
 #include <QtWidgets/QApplication>
+#pragma warning(pop)
 
 #include <DirectXTex.h>
 
-#include <fstream>
 #include <cstdlib>
+#include <fstream>
 
 using namespace parser;
 
@@ -62,7 +65,7 @@ int main(int argc, char** argv) {
 
             if (scene.sceneRoot.has_value())
                 spdlog::info("SIR: '{}' parsed", sir.filename);
-            else 
+            else
                 spdlog::warn("SIR: '{}' not parsed", sir.filename);
 
             if (scene.sceneRoot.has_value()) {

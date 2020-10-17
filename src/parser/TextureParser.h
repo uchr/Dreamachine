@@ -3,8 +3,7 @@
 #include <filesystem>
 #include <vector>
 
-namespace parser
-{
+namespace parser {
 
 struct MeshPart;
 

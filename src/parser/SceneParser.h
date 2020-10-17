@@ -1,18 +1,16 @@
 #pragma once
 
 #include "BundleHeader.h"
-#include "SceneNode.h"
 #include "SceneIndex.h"
+#include "SceneNode.h"
 
 #include <filesystem>
 
-namespace parser
-{
+namespace parser {
 
 struct SharkNode;
 
-class SceneParser
-{
+class SceneParser {
 public:
     SceneParser(const SirEntry& sirEntry, const std::string& bundleName);
 
@@ -33,4 +31,4 @@ private:
     const SirEntry& m_sirEntry;
 };
 
-}
+} // namespace parser

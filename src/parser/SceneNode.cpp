@@ -4,8 +4,7 @@
 
 #include <fmt/format.h>
 
-namespace
-{
+namespace {
 
 Magnum::Vector3 toEulerAngles(Magnum::Quaternion q) {
     Magnum::Vector3 angles;
@@ -30,8 +29,7 @@ Magnum::Vector3 toEulerAngles(Magnum::Quaternion q) {
     return angles;
 }
 
-void numberOfMeshes(const parser::SceneNode& node, size_t& number)
-{
+void numberOfMeshes(const parser::SceneNode& node, size_t& number) {
     if (node.mesh.has_value())
         number += node.mesh->meshParts.size();
 
@@ -41,8 +39,7 @@ void numberOfMeshes(const parser::SceneNode& node, size_t& number)
     }
 }
 
-void print(const parser::SceneNode& node, std::string offset)
-{
+void print(const parser::SceneNode& node, std::string offset) {
     bool hasMesh = node.mesh.has_value();
     bool hasTexture = node.mesh.has_value() && !node.mesh->meshParts[0].textures[0].empty();
     fmt::print("{}{} {}{}\n", offset, node.name, hasMesh ? "(m)" : "", hasTexture ? "(t)" : "");
@@ -53,10 +50,9 @@ void print(const parser::SceneNode& node, std::string offset)
     }
 }
 
-}
+} // namespace
 
-namespace parser
-{
+namespace parser {
 
 Magnum::Matrix4 SceneNode::computeTransformationMatrix() const {
     float magnumScale = 1.0f / scale;
@@ -76,8 +72,7 @@ Magnum::Matrix4 SceneNode::computeTransformationMatrix() const {
     return transformationMatrix;
 }
 
-Transofrmation SceneNode::computeTransformation() const
-{
+Transofrmation SceneNode::computeTransformation() const {
     float magnumScale = 1.0f / scale;
     Magnum::Vector3 magnumPosition(position.x, position.y, position.z);
     Magnum::Quaternion magnumRotation(Magnum::Vector3(rotation.x, rotation.y, rotation.z), rotation.w);
@@ -101,4 +96,4 @@ void SceneNode::print() const {
     ::print(*this, "");
 }
 
-}
+} // namespace parser

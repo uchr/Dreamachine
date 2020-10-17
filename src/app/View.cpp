@@ -3,8 +3,8 @@
 
 #include <parser/SceneIndex.h>
 
-#include <Magnum/GL/Renderer.h>
 #include <Magnum/GL/Framebuffer.h>
+#include <Magnum/GL/Renderer.h>
 
 #include <spdlog/spdlog.h>
 
@@ -12,10 +12,8 @@ using namespace Magnum;
 using namespace Math::Literals;
 
 View::View(Platform::GLContext& context, QWidget* parent)
-    : QOpenGLWidget(parent)
-    , m_context(context)
-{
-}
+        : QOpenGLWidget(parent)
+        , m_context(context) {}
 
 View::~View() = default;
 
@@ -55,14 +53,14 @@ void View::paintGL() {
     auto qtDefaultFramebuffer = GL::Framebuffer::wrap(defaultFramebufferObject(), {{}, {width(), height()}});
     qtDefaultFramebuffer.clear(GL::FramebufferClear::Color | GL::FramebufferClear::Depth);
 
-    while(!m_meshToLoading.empty()) {
+    while (!m_meshToLoading.empty()) {
         size_t sirIndex = m_meshToLoading.back();
         m_meshToLoading.pop_back();
 
         m_viewScene->load(sirIndex);
     }
 
-    while(!m_meshToUnloading.empty()) {
+    while (!m_meshToUnloading.empty()) {
         size_t sirIndex = m_meshToUnloading.back();
         m_meshToUnloading.pop_back();
 

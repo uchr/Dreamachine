@@ -2,12 +2,12 @@
 
 #include <filesystem>
 
-namespace parser
-{
+namespace parser {
 struct SceneNode;
 }
 
-enum class ExportMode {
+enum class ExportMode
+{
     Single,
     Multiple
 };

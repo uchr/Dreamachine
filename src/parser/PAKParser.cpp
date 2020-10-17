@@ -10,10 +10,9 @@
 
 namespace {
 
-const std::vector<char> charTable{'\0', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
-                                  'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
-                                  'x', 'y', 'z', '\\', '?', '?', '-', '_', '\'', '.', '0', '1',
-                                  '2', '3', '4', '5', '6', '7', '8', '9'};
+const std::vector<char> charTable{'\0', 'a', 'b',  'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',  'm', 'n',
+                                  'o',  'p', 'q',  'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '\\', '?', '?',
+                                  '-',  '_', '\'', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8',  '9'};
 
 char hex2char(int a) {
     if (a > charTable.size())
@@ -21,18 +20,16 @@ char hex2char(int a) {
     return charTable[a];
 }
 
-int char2hex(char c)
-{
+int char2hex(char c) {
     auto it = std::find(charTable.begin(), charTable.end(), c);
     if (it == charTable.end())
         return -1;
     return static_cast<int>(std::distance(charTable.begin(), it));
 }
 
-} // anonymouse namespace
+} // namespace
 
-namespace parser
-{
+namespace parser {
 
 PAKFileEntry::PAKFileEntry(BinReader& binReader) {
     offset = binReader.read<uint32_t>();
@@ -44,24 +41,20 @@ PAKFileEntry::PAKFileEntry(BinReader& binReader) {
         --hLen;
 }
 
-void PAKFileEntry::fillIn(const std::vector<char>& nameBlock)
-{
-    for (int i = hRef; i < nameBlock.size(); i++)
-    {
+void PAKFileEntry::fillIn(const std::vector<char>& nameBlock) {
+    for (int i = hRef; i < nameBlock.size(); i++) {
         if (nameBlock[i] == 0)
             break;
         partialName += nameBlock[i];
     }
 }
 
-bool PAKFileEntry::isRealFile() const
-{
+bool PAKFileEntry::isRealFile() const {
     return size > 0;
 }
 
 PAKIndex::PAKIndex(const std::filesystem::path& path)
-    : path(path)
-{
+        : path(path) {
     BinReaderMmap binReader(path);
 
     // read magic
@@ -96,9 +89,8 @@ PAKParser& PAKParser::instance() {
     return pakParser;
 }
 
-PAKParser::PAKParser(const std::filesystem::path& path)
-{
-    for(auto& childIt: std::filesystem::directory_iterator(path)) {
+PAKParser::PAKParser(const std::filesystem::path& path) {
+    for (auto& childIt : std::filesystem::directory_iterator(path)) {
         auto childPath = childIt.path();
         if (childPath.extension().string() == ".pak")
             m_pakIndices[Utils::getFilenameWithoutExtension(childPath)] = PAKIndex(childPath);
@@ -128,9 +120,8 @@ void PAKParser::tryExtract(const std::filesystem::path& path) {
         m_extracted.insert(path.string());
         spdlog::debug("Extracted successfully to {}", path.string());
     }
-    else
-    {
-        spdlog::warn("{} not found", innerPath); 
+    else {
+        spdlog::warn("{} not found", innerPath);
     }
 }
 
@@ -144,8 +135,7 @@ void PAKParser::extract(const PAKIndex& pakIndex, const PAKFileEntry& entry, con
 }
 
 PAKFileEntry* PAKParser::findFile(PAKIndex& pakIndex, std::string innerPath) const {
-    std::transform(innerPath.begin(), innerPath.end(), innerPath.begin(),
-                    [](unsigned char c) { return std::tolower(c); });
+    std::transform(innerPath.begin(), innerPath.end(), innerPath.begin(), [](unsigned char c) { return std::tolower(c); });
 
     return findFile(pakIndex, innerPath, "", 0);
 }
@@ -168,8 +158,7 @@ PAKFileEntry* PAKParser::findFile(PAKIndex& pakIndex, std::string innerPathLeft,
     if (innerPathPassed.size() != pakIndex.entries[num].hLen + 1)
         return nullptr;
 
-    if (pakIndex.entries[num].isRealFile())
-    {
+    if (pakIndex.entries[num].isRealFile()) {
         if (innerPathLeft.size() != 0)
             return nullptr;
         return &pakIndex.entries[num];
@@ -179,4 +168,4 @@ PAKFileEntry* PAKParser::findFile(PAKIndex& pakIndex, std::string innerPathLeft,
     return findFile(pakIndex, innerPathLeft, innerPathPassed, pakIndex.entries[num].hOffset);
 }
 
-}
+} // namespace parser

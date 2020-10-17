@@ -4,12 +4,11 @@
 #include "SharkNode.h"
 
 #include <filesystem>
-#include <vector>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
-namespace parser
-{
+namespace parser {
 
 class BinReader;
 
@@ -34,4 +33,4 @@ private:
     const std::string magic = "shark3d_snake_binary";
 };
 
-}
+} // namespace parser

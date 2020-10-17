@@ -6,12 +6,12 @@
 #include <parser/SceneIndex.h>
 #include <parser/SceneParser.h>
 
-#include <Magnum/ImageView.h>
-#include <Magnum/Mesh.h>
-#include <Magnum/PixelFormat.h>
 #include <Magnum/GL/DefaultFramebuffer.h>
 #include <Magnum/GL/TextureFormat.h>
+#include <Magnum/ImageView.h>
+#include <Magnum/Mesh.h>
 #include <Magnum/MeshTools/Compile.h>
+#include <Magnum/PixelFormat.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Trade/ImageData.h>
 #include <Magnum/Trade/MeshData3D.h>
@@ -25,38 +25,38 @@
 using namespace Magnum;
 using namespace Math::Literals;
 
-namespace
-{
-class TexturedDrawable: public SceneGraph::Drawable3D {
-    public:
-        explicit TexturedDrawable(Object3D& object, Shaders::Phong& shader, GL::Mesh& mesh, GL::Texture2D& texture, SceneGraph::DrawableGroup3D& group)
+namespace {
+class TexturedDrawable : public SceneGraph::Drawable3D {
+public:
+    explicit TexturedDrawable(Object3D& object,
+                              Shaders::Phong& shader,
+                              GL::Mesh& mesh,
+                              GL::Texture2D& texture,
+                              SceneGraph::DrawableGroup3D& group)
             : SceneGraph::Drawable3D{object, &group}
             , m_shader(shader)
             , m_mesh(mesh)
-            , m_texture(texture)
-        {
-        }
+            , m_texture(texture) {}
 
-    private:
-        void draw(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera) override;
+private:
+    void draw(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera) override;
 
-        Shaders::Phong& m_shader;
-        GL::Mesh& m_mesh;
-        GL::Texture2D& m_texture;
+    Shaders::Phong& m_shader;
+    GL::Mesh& m_mesh;
+    GL::Texture2D& m_texture;
 };
 
 void TexturedDrawable::draw(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera) {
     m_shader.setLightPosition(camera.cameraMatrix().transformPoint(Vector3(-50, 100, 100)))
-            .setTransformationMatrix(transformationMatrix)
-            .setNormalMatrix(transformationMatrix.normalMatrix())
-            .setProjectionMatrix(camera.projectionMatrix())
-            .bindDiffuseTexture(m_texture)
-            .bindAmbientTexture(m_texture);
+        .setTransformationMatrix(transformationMatrix)
+        .setNormalMatrix(transformationMatrix.normalMatrix())
+        .setProjectionMatrix(camera.projectionMatrix())
+        .bindDiffuseTexture(m_texture)
+        .bindAmbientTexture(m_texture);
     m_mesh.draw(m_shader);
 }
 
-Trade::MeshData3D createMeshData(const parser::Mesh& mesh, size_t meshPartIndex)
-{
+Trade::MeshData3D createMeshData(const parser::Mesh& mesh, size_t meshPartIndex) {
     const parser::MeshPart meshPart = mesh.meshParts[meshPartIndex];
 
     std::vector<std::vector<Vector3>> positions(1);
@@ -95,26 +95,24 @@ Trade::MeshData3D createMeshData(const parser::Mesh& mesh, size_t meshPartIndex)
                                {});
     return meshData;
 }
-}
+} // namespace
 
 ViewScene::ViewScene(const InputManager& inputManager, const TimeManager& timeManager)
-    : m_inputManager(inputManager)
-    , m_timeManager(timeManager)
-    , m_texturedShader(Shaders::Phong::Flag::DiffuseTexture | Shaders::Phong::Flag::AmbientTexture)
-{
+        : m_inputManager(inputManager)
+        , m_timeManager(timeManager)
+        , m_texturedShader(Shaders::Phong::Flag::DiffuseTexture | Shaders::Phong::Flag::AmbientTexture) {
     m_cameraObject.setParent(&m_scene);
     updateCameraTransform();
 
     m_camera = new SceneGraph::Camera3D(m_cameraObject);
-    (*m_camera).setAspectRatioPolicy(SceneGraph::AspectRatioPolicy::Extend)
-               .setProjectionMatrix(Matrix4::perspectiveProjection(35.0_degf, 1.0f, 0.01f, 1000.0f))
-               .setViewport(GL::defaultFramebuffer.viewport().size());
+    (*m_camera)
+        .setAspectRatioPolicy(SceneGraph::AspectRatioPolicy::Extend)
+        .setProjectionMatrix(Matrix4::perspectiveProjection(35.0_degf, 1.0f, 0.01f, 1000.0f))
+        .setViewport(GL::defaultFramebuffer.viewport().size());
 
     m_manipulator.setParent(&m_scene);
 
-    m_texturedShader.setAmbientColor(0x5c5c5c_rgbf)
-                    .setSpecularColor(0x000000_rgbf)
-                    .setShininess(0.0f);
+    m_texturedShader.setAmbientColor(0x5c5c5c_rgbf).setSpecularColor(0x000000_rgbf).setShininess(0.0f);
 }
 
 void ViewScene::load(size_t sirIndex) {
@@ -122,7 +120,8 @@ void ViewScene::load(size_t sirIndex) {
         return;
 
     assert(m_sceneIndex);
-    std::unique_ptr<parser::SceneParser> scene = std::make_unique<parser::SceneParser>(m_sceneIndex->sirs[sirIndex], m_sceneIndex->bundleName);
+    std::unique_ptr<parser::SceneParser> scene =
+        std::make_unique<parser::SceneParser>(m_sceneIndex->sirs[sirIndex], m_sceneIndex->bundleName);
     if (!scene->sceneRoot.has_value())
         return;
 
@@ -184,8 +183,7 @@ void ViewScene::updateCameraTransform() {
     m_cameraObject.setTransformation(transfromation);
 }
 
-void ViewScene::setupScene(const parser::SceneNode& node, DrawableData& drawableData)
-{
+void ViewScene::setupScene(const parser::SceneNode& node, DrawableData& drawableData) {
     size_t meshIndex = 0;
     setupScene(node, m_manipulator, meshIndex, drawableData);
 }
@@ -211,22 +209,24 @@ void ViewScene::setupScene(const parser::SceneNode& node, Object3D& parent, size
 
             Containers::Optional<Trade::ImageData2D> imageData = importer->image2D(0);
             GL::TextureFormat format;
-            if(imageData && imageData->format() == PixelFormat::RGB8Unorm)
+            if (imageData && imageData->format() == PixelFormat::RGB8Unorm)
                 format = GL::TextureFormat::RGB8;
-            else if(imageData && imageData->format() == PixelFormat::RGBA8Unorm)
+            else if (imageData && imageData->format() == PixelFormat::RGBA8Unorm)
                 format = GL::TextureFormat::RGBA8;
 
             GL::Texture2D texture;
             texture.setWrapping(GL::SamplerWrapping::MirroredRepeat)
-                   .setMagnificationFilter(GL::SamplerFilter::Linear)
-                   .setMinificationFilter(GL::SamplerFilter::Linear)
-                   .setStorage(1, GL::textureFormat(imageData->format()), imageData->size())
-                   .setSubImage(0, {}, *imageData);
+                .setMagnificationFilter(GL::SamplerFilter::Linear)
+                .setMinificationFilter(GL::SamplerFilter::Linear)
+                .setStorage(1, GL::textureFormat(imageData->format()), imageData->size())
+                .setSubImage(0, {}, *imageData);
 
             drawableData.textures[meshIndex] = std::move(texture);
 
-            new TexturedDrawable(*object, m_texturedShader, 
-                                 *drawableData.meshes[meshIndex], *drawableData.textures[meshIndex],
+            new TexturedDrawable(*object,
+                                 m_texturedShader,
+                                 *drawableData.meshes[meshIndex],
+                                 *drawableData.textures[meshIndex],
                                  drawableData.drawables);
             ++meshIndex;
         }

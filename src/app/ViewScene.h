@@ -10,11 +10,10 @@
 #include <Magnum/SceneGraph/Scene.h>
 #include <Magnum/Shaders/Phong.h>
 
-namespace parser
-{
+namespace parser {
 struct SceneIndex;
 struct SceneNode;
-}
+} // namespace parser
 
 class TimeManager;
 class InputManager;
@@ -30,7 +29,7 @@ public:
     void unload(size_t sirIndex);
 
     void setSceneIndex(parser::SceneIndex* sceneIndex);
-    
+
     void draw();
     void setViewport(int width, int height);
     void rotateCamera(const Magnum::Vector2& mouseDelta);

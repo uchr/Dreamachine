@@ -2,18 +2,16 @@
 
 #include "Geometry.h"
 
-#include <vector>
-#include <string>
 #include <array>
 #include <optional>
+#include <string>
+#include <vector>
 
-namespace parser
-{
+namespace parser {
 
 class BinReader;
 
-struct PartHeader
-{
+struct PartHeader {
     std::array<uint32_t, 18> cfArray;
     int32_t numMagic;
     uint32_t posMagic;
@@ -58,8 +56,7 @@ struct PartHeader
     bool load(BinReader& binReader);
 };
 
-struct PartTexInfo
-{
+struct PartTexInfo {
     uint32_t cf1, cf2;
     uint32_t posTex;
     int32_t unknown;
@@ -68,8 +65,7 @@ struct PartTexInfo
     bool load(BinReader& binReader, int numTexStages);
 };
 
-struct MeshPartInfo
-{
+struct MeshPartInfo {
     PartHeader header;
     std::vector<uint32_t> posTextures;
     std::vector<uint32_t> magic;
@@ -89,8 +85,7 @@ struct MeshPartInfo
     bool load(BinReader& binReader);
 };
 
-struct MeshHeader
-{
+struct MeshHeader {
     uint32_t posName;
     float rescale;
     Vector3 posCenter;
@@ -108,8 +103,7 @@ struct MeshHeader
     bool load(BinReader& binReader);
 };
 
-struct MeshInfo
-{
+struct MeshInfo {
     MeshHeader header;
     std::string name;
     std::vector<uint32_t> posParts;
@@ -121,16 +115,14 @@ struct MeshInfo
     bool load(BinReader& binReader);
 };
 
-struct MeshEntry
-{
+struct MeshEntry {
     size_t posStart;
     std::string name;
     int dataIndex;
     MeshInfo mesh;
 };
 
-struct BundleFileEntry
-{
+struct BundleFileEntry {
     size_t posStart;
     std::string smrName;
     std::vector<MeshEntry> meshEntries;
@@ -145,21 +137,19 @@ struct BundleFileEntry
     }
 };
 
-struct VertexDataHeader
-{
+struct VertexDataHeader {
     size_t posStart;
     int vertexSize, length;
     std::vector<char> data;
 };
 
-struct StreamFormat
-{
+struct StreamFormat {
     int32_t size;
     std::array<int, 16> channel;
     int32_t streams;
 };
 
-struct BundleHeader  {
+struct BundleHeader {
     size_t posZero, posOrigin;
     std::vector<std::string> textures;
     std::vector<VertexDataHeader> dataHeader;
@@ -176,4 +166,4 @@ struct BundleHeader  {
     }
 };
 
-}
+} // namespace parser

@@ -4,13 +4,15 @@
 
 #include "parser/CommonPath.h"
 
-#include <QVBoxLayout>
+#pragma warning(push)
+#pragma warning(disable : 5054)
 #include <QListWidget>
 #include <QPushButton>
+#include <QVBoxLayout>
+#pragma warning(pop)
 
 BundleListWindow::BundleListWindow(MainWindow* mainWindow)
-    : m_mainWindow(mainWindow)
-{
+        : m_mainWindow(mainWindow) {
     setWindowFlags(windowFlags() | Qt::MSWindowsFixedSizeDialogHint);
 
     QVBoxLayout* layout = new QVBoxLayout(this);
@@ -40,7 +42,7 @@ void BundleListWindow::doLoadBundle() {
 
 void BundleListWindow::fillBundleList() {
     QStringList strList;
-    for(auto& bundlePath : std::filesystem::directory_iterator(bundlesFolderPath))
+    for (auto& bundlePath : std::filesystem::directory_iterator(bundlesFolderPath))
         strList.append(QString::fromStdString(bundlePath.path().string()));
     m_list->addItems(strList);
 }

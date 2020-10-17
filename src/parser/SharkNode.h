@@ -2,12 +2,11 @@
 
 #include "Utils.h"
 
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
 
-namespace parser
-{
+namespace parser {
 
 enum SharkNodeType
 {
@@ -26,21 +25,17 @@ struct SharkNode;
 SharkNode* getNode(SharkNode* parent, const std::string& name);
 void print(SharkNode* node, std::ostream& out, const std::string& offset);
 
-struct SharkNode
-{
+struct SharkNode {
     SharkNodeType type;
     std::string name;
 
     SharkNode(std::string name)
-        : type(SharkNodeType::Empty)
-        , name(std::move(name))
-    {
-    }
+            : type(SharkNodeType::Empty)
+            , name(std::move(name)) {}
 
     virtual ~SharkNode() = default;
 
-    SharkNode* goSub(const std::string& path)
-    {
+    SharkNode* goSub(const std::string& path) {
         std::string next = Utils::splitString(path, '/')[0];
         SharkNode* nextNode = getNode(this, next);
         if (nextNode == nullptr || next == path)
@@ -49,23 +44,18 @@ struct SharkNode
         return nextNode->goSub(leftPath);
     }
 
-    virtual SharkNode* at(int) {
-        return nullptr;
-    };
+    virtual SharkNode* at(int) { return nullptr; };
 
-    virtual size_t count() {
-        return 0;
-    };
+    virtual size_t count() { return 0; };
 };
 
-template<typename T>
+template <typename T>
 struct SharkNodeValue : public SharkNode {
     T value;
 
     SharkNodeValue(T value, std::string name)
-        : value(std::move(value))
-        , SharkNode(name)
-    {
+            : value(std::move(value))
+            , SharkNode(name) {
         if constexpr (std::is_same_v<T, int64_t>)
             type = SharkNodeType::Int;
         else if constexpr (std::is_same_v<T, float>)
@@ -79,25 +69,19 @@ struct SharkNodeValue : public SharkNode {
     virtual ~SharkNodeValue() = default;
 };
 
-template<>
+template <>
 struct SharkNodeValue<std::vector<SharkNode*>> : public SharkNode {
     std::vector<SharkNode*> value;
 
     SharkNodeValue(std::vector<SharkNode*> value, std::string name)
-        : value(std::move(value))
-        , SharkNode(name)
-    {
+            : value(std::move(value))
+            , SharkNode(name) {
         type = SharkNodeType::Sub;
     }
 
-    size_t count() override {
-        return 1;
-    };
+    size_t count() override { return 1; };
 
-    SharkNode* at(int) override
-    {
-        return dynamic_cast<SharkNode*>(this);
-    }
+    SharkNode* at(int) override { return dynamic_cast<SharkNode*>(this); }
 
     virtual ~SharkNodeValue() {
         for (auto* node : value) {
@@ -108,14 +92,13 @@ struct SharkNodeValue<std::vector<SharkNode*>> : public SharkNode {
 
 using SharkNodeSub = SharkNodeValue<std::vector<SharkNode*>>;
 
-template<typename T>
+template <typename T>
 struct SharkNodeArray : public SharkNode {
     std::vector<T> value;
 
     SharkNodeArray(std::vector<T> value, std::string name)
-        : value(std::move(value))
-        , SharkNode(name)
-    {
+            : value(std::move(value))
+            , SharkNode(name) {
         if constexpr (std::is_same_v<T, int64_t>)
             type = SharkNodeType::ArrayInt;
         else if constexpr (std::is_same_v<T, float>)
@@ -126,32 +109,24 @@ struct SharkNodeArray : public SharkNode {
             static_assert(std::false_type::value, "unsupported type");
     }
 
-    size_t count() override {
-        return value.size();
-    };
+    size_t count() override { return value.size(); };
 
     virtual ~SharkNodeArray() = default;
 };
 
-template<>
+template <>
 struct SharkNodeArray<SharkNode*> : public SharkNode {
     std::vector<SharkNode*> value;
 
     SharkNodeArray(std::vector<SharkNode*> value, std::string name)
-        : value(std::move(value))
-        , SharkNode(name)
-    {
+            : value(std::move(value))
+            , SharkNode(name) {
         type = SharkNodeType::ArraySub;
     }
 
-    size_t count() override {
-        return value.size();
-    };
+    size_t count() override { return value.size(); };
 
-    SharkNode* at(int index) override
-    {
-        return value.at(index);
-    }
+    SharkNode* at(int index) override { return value.at(index); }
 
     virtual ~SharkNodeArray() {
         for (auto* node : value) {
@@ -161,8 +136,7 @@ struct SharkNodeArray<SharkNode*> : public SharkNode {
 };
 
 template <typename T>
-std::optional<T> getEntryValue(SharkNode* node, const std::string& name)
-{
+std::optional<T> getEntryValue(SharkNode* node, const std::string& name) {
     SharkNode* cur = node->goSub(name);
     if (cur == nullptr)
         return std::nullopt;
@@ -170,12 +144,11 @@ std::optional<T> getEntryValue(SharkNode* node, const std::string& name)
 }
 
 template <typename T>
-std::optional<std::vector<T>> getEntryArray(SharkNode* node, const std::string& name)
-{
+std::optional<std::vector<T>> getEntryArray(SharkNode* node, const std::string& name) {
     SharkNode* cur = node->goSub(name);
     if (cur == nullptr)
         return std::nullopt;
     return dynamic_cast<SharkNodeArray<T>*>(cur)->value;
 }
 
-}
+} // namespace parser

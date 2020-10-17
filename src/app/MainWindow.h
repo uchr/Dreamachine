@@ -4,23 +4,21 @@
 
 #pragma warning(push)
 #pragma warning(disable : 5054)
-#include <QObject>
 #include <QMainWindow>
+#include <QObject>
 #pragma warning(pop)
 
-namespace parser
-{
+namespace parser {
 struct SceneIndex;
 struct SceneNode;
-}
+} // namespace parser
 class View;
 class BundleListWindow;
 
 QT_FORWARD_DECLARE_CLASS(QListWidget)
 QT_FORWARD_DECLARE_CLASS(QListWidgetItem)
 
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:

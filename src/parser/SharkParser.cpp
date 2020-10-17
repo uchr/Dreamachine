@@ -8,21 +8,17 @@
 #include <cassert>
 #include <fstream>
 
-namespace parser
-{
+namespace parser {
 
-std::vector<std::string> getSir(SharkNode* children)
-{
+std::vector<std::string> getSir(SharkNode* children) {
     if (children == nullptr)
         return {};
 
     std::vector<std::string> sirs;
-    for (int i = 0; i < children->count(); i++)
-    {
+    for (int i = 0; i < children->count(); i++) {
         SharkNode* child = children->at(i);
         auto type = getEntryValue<std::string>(child, "type");
-        if (type.has_value() && *type == "mod_engobj_funcom.loadtree")
-        {
+        if (type.has_value() && *type == "mod_engobj_funcom.loadtree") {
             auto name = getEntryValue<std::string>(child, "param/tree");
             if (name.has_value())
                 sirs.emplace_back(*name);
@@ -38,8 +34,7 @@ std::vector<std::string> getSir(SharkNode* children)
     return sirs;
 }
 
-std::vector<std::string> getBpr(SharkNode* root)
-{
+std::vector<std::string> getBpr(SharkNode* root) {
     SharkNode* node = root->goSub("actor_param/child_param/children");
     for (int i = 0; node != nullptr && i < node->count(); i++) {
         auto type = getEntryValue<std::string>(node->at(i), "type");
@@ -72,13 +67,11 @@ SceneIndex SharkParser::parseScene(const std::string& bundleName) {
     return sceneIndex;
 }
 
-SharkNode* SharkParser::getRoot() const
-{
+SharkNode* SharkParser::getRoot() const {
     return m_root.get();
 }
 
-std::string SharkParser::indexString(BinReader& binReader)
-{
+std::string SharkParser::indexString(BinReader& binReader) {
     int num = static_cast<int>(binReader.readSharkNum());
     int index = m_stringCount - num;
     if (num == 0)
@@ -90,70 +83,63 @@ std::string SharkParser::indexString(BinReader& binReader)
     return result;
 }
 
-std::vector<SharkNode*> SharkParser::readSub(BinReader& binReader)
-{
+std::vector<SharkNode*> SharkParser::readSub(BinReader& binReader) {
     int num = static_cast<int>(binReader.readSharkNum());
 
     std::vector<SharkNode*> nodes(num);
-    for (int i = 0; i < num; i++)
-    {
+    for (int i = 0; i < num; i++) {
         std::string name = indexString(binReader);
         int attachCode = binReader.readByte();
-        switch (attachCode)
-        {
-            case 0:
-                nodes[i] = new SharkNode(name);
-                break;
-            case 1:
-                nodes[i] = new SharkNodeValue(binReader.readSharkNum(), name);
-                break;
-            case 2:
-                {
-                    std::vector<int64_t> table(binReader.readSharkNum());
-                    for (int e = 0; e < table.size(); e++)
-                        table[e] = binReader.readSharkNum();
-                    nodes[i] = new SharkNodeArray(table, name);
-                    break;
-                }
-            case 4:
-                nodes[i] = new SharkNodeValue(binReader.readEndianFloat(), name);
-                break;
-            case 8:
-                {
-                    std::vector<float> table(binReader.readSharkNum());
-                    for (int e = 0; e < table.size(); e++)
-                        table[e] = binReader.readEndianFloat();
-                    nodes[i] = new SharkNodeArray(table, name);
-                    break;
-                }
-            case 0x10:
-                nodes[i] = new SharkNodeValue(indexString(binReader), name);
-                break;
-            case 0x20:
-                {
-                    std::vector<std::string> table(binReader.readSharkNum());
-                    for (int e = 0; e < table.size(); e++)
-                        table[e] = indexString(binReader);
-                    nodes[i] = new SharkNodeArray(table, name);
-                    break;
-                }
-            case 0x40:
-                nodes[i] = new SharkNodeValue(readSub(binReader), name);
-                break;
-            case 0x80:
-                {
-                    std::vector<SharkNode*> table(binReader.readSharkNum());
-                    for (int e = 0; e < table.size(); e++)
-                        table[e] = new SharkNodeValue(readSub(binReader), name);
-                    nodes[i] = new SharkNodeArray(table, name);
-                    break;
-                }
-            default:
-                spdlog::error("Unrecognized code in shark3d binary!");
-                return {};
+        switch (attachCode) {
+        case 0:
+            nodes[i] = new SharkNode(name);
+            break;
+        case 1:
+            nodes[i] = new SharkNodeValue(binReader.readSharkNum(), name);
+            break;
+        case 2: {
+            std::vector<int64_t> table(binReader.readSharkNum());
+            for (int e = 0; e < table.size(); e++)
+                table[e] = binReader.readSharkNum();
+            nodes[i] = new SharkNodeArray(table, name);
+            break;
+        }
+        case 4:
+            nodes[i] = new SharkNodeValue(binReader.readEndianFloat(), name);
+            break;
+        case 8: {
+            std::vector<float> table(binReader.readSharkNum());
+            for (int e = 0; e < table.size(); e++)
+                table[e] = binReader.readEndianFloat();
+            nodes[i] = new SharkNodeArray(table, name);
+            break;
+        }
+        case 0x10:
+            nodes[i] = new SharkNodeValue(indexString(binReader), name);
+            break;
+        case 0x20: {
+            std::vector<std::string> table(binReader.readSharkNum());
+            for (int e = 0; e < table.size(); e++)
+                table[e] = indexString(binReader);
+            nodes[i] = new SharkNodeArray(table, name);
+            break;
+        }
+        case 0x40:
+            nodes[i] = new SharkNodeValue(readSub(binReader), name);
+            break;
+        case 0x80: {
+            std::vector<SharkNode*> table(binReader.readSharkNum());
+            for (int e = 0; e < table.size(); e++)
+                table[e] = new SharkNodeValue(readSub(binReader), name);
+            nodes[i] = new SharkNodeArray(table, name);
+            break;
+        }
+        default:
+            spdlog::error("Unrecognized code in shark3d binary!");
+            return {};
         }
     }
     return nodes;
 }
 
-}
+} // namespace parser

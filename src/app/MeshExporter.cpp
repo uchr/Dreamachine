@@ -1,13 +1,17 @@
 #include "MeshExporter.h"
 
-#include <parser/TextureParser.h>
 #include <parser/SceneNode.h>
+#include <parser/TextureParser.h>
 #include <parser/Utils.h>
 
 #include <fbxsdk.h>
 #include <spdlog/spdlog.h>
 
-void prepareScene(FbxManager* fbxManager, FbxScene* fbxScene, FbxNode* fbxSceneNode, const parser::SceneNode& parsedSceneNode, bool isRootNode = false) {
+void prepareScene(FbxManager* fbxManager,
+                  FbxScene* fbxScene,
+                  FbxNode* fbxSceneNode,
+                  const parser::SceneNode& parsedSceneNode,
+                  bool isRootNode = false) {
     auto createTexture = [&](const std::filesystem::path& path) {
         const std::string textureName = Utils::getFilenameWithoutExtension(path);
         FbxFileTexture* texture = FbxFileTexture::Create(fbxManager, textureName.c_str());
@@ -38,13 +42,15 @@ void prepareScene(FbxManager* fbxManager, FbxScene* fbxScene, FbxNode* fbxSceneN
         if (meshPart.alphaTexture.has_value())
             material->TransparentColor.ConnectSrcObject(createTexture(meshPart.alphaTexture.value()));
 
-        auto normalMapIt = std::find_if(meshPart.textures.begin(), meshPart.textures.end(),
-            [](const std::filesystem::path& path) { return path.string().find("nml") != std::string::npos; } );
+        auto normalMapIt = std::find_if(meshPart.textures.begin(), meshPart.textures.end(), [](const std::filesystem::path& path) {
+            return path.string().find("nml") != std::string::npos;
+        });
         if (normalMapIt != meshPart.textures.end())
             material->NormalMap.ConnectSrcObject(createTexture(*normalMapIt));
 
-        auto heightMapIt = std::find_if(meshPart.textures.begin(), meshPart.textures.end(),
-            [](const std::filesystem::path& path) { return path.string().find("hmap") != std::string::npos; } );
+        auto heightMapIt = std::find_if(meshPart.textures.begin(), meshPart.textures.end(), [](const std::filesystem::path& path) {
+            return path.string().find("hmap") != std::string::npos;
+        });
         if (heightMapIt != meshPart.textures.end()) {
             material->Bump.ConnectSrcObject(createTexture(*heightMapIt));
             material->BumpFactor.Set(1.0);
@@ -59,7 +65,8 @@ void prepareScene(FbxManager* fbxManager, FbxScene* fbxScene, FbxNode* fbxSceneN
     const double rad2Deg = 57.2958;
     parser::Transofrmation transformation = parsedSceneNode.computeTransformation();
     fbxMeshNode->LclTranslation.Set(FbxVector4(transformation.translation.x, transformation.translation.y, transformation.translation.z));
-    fbxMeshNode->LclRotation.Set(FbxVector4(transformation.rotation.x * rad2Deg, transformation.rotation.y * rad2Deg, transformation.rotation.z * rad2Deg));
+    fbxMeshNode->LclRotation.Set(
+        FbxVector4(transformation.rotation.x * rad2Deg, transformation.rotation.y * rad2Deg, transformation.rotation.z * rad2Deg));
     fbxMeshNode->LclScaling.Set(FbxVector4(transformation.scale, transformation.scale, transformation.scale));
 
     if (isRootNode) {
@@ -67,7 +74,8 @@ void prepareScene(FbxManager* fbxManager, FbxScene* fbxScene, FbxNode* fbxSceneN
         fbxMeshNode->LclScaling.Set(FbxVector4(50, 50, 50));
     }
 
-    if (parsedSceneNode.mesh.has_value() && !parsedSceneNode.mesh->meshParts.empty() && !parsedSceneNode.mesh->meshParts[0].textures.empty()) {
+    if (parsedSceneNode.mesh.has_value() && !parsedSceneNode.mesh->meshParts.empty() &&
+        !parsedSceneNode.mesh->meshParts[0].textures.empty()) {
         const auto& mesh = *parsedSceneNode.mesh;
         FbxMesh* fbxMesh = FbxMesh::Create(fbxManager, parsedSceneNode.name.c_str());
         fbxMesh->InitControlPoints(mesh.vertices.size());
@@ -138,8 +146,7 @@ void prepareScene(FbxManager* fbxManager, FbxScene* fbxScene, FbxNode* fbxSceneN
             }
 
             // Create polygons
-            for (size_t ti = meshPart.indexInterval.first; ti < meshPart.indexInterval.second;)
-            {
+            for (size_t ti = meshPart.indexInterval.first; ti < meshPart.indexInterval.second;) {
                 fbxMesh->BeginPolygon(fbxMeshNode->GetMaterialCount() - 1);
 
                 fbxMesh->AddPolygon(mesh.indices[ti++]);
@@ -172,12 +179,10 @@ void prepareScene(FbxManager* fbxManager, FbxScene* fbxScene, FbxNode* fbxSceneN
     }
 }
 
-bool saveScene(FbxManager* fbxManager, FbxScene* fbxScene, const std::string& outputPath, int fileFormat)
-{
+bool saveScene(FbxManager* fbxManager, FbxScene* fbxScene, const std::string& outputPath, int fileFormat) {
     FbxExporter* exporter = FbxExporter::Create(fbxManager, "");
 
-    if (!exporter->Initialize(outputPath.c_str(), fileFormat, fbxManager->GetIOSettings()))
-    {
+    if (!exporter->Initialize(outputPath.c_str(), fileFormat, fbxManager->GetIOSettings())) {
         spdlog::error("Call to FbxExporter::Initialize() failed.");
         spdlog::error("Error returned: {} \n\n", exporter->GetStatus().GetErrorString());
         return false;
@@ -193,8 +198,7 @@ bool exportScene(const std::vector<parser::SceneNode>& parsedSceneNodes, const s
         return false;
 
     FbxManager* fbxManager = FbxManager::Create();
-    if (!fbxManager)
-    {
+    if (!fbxManager) {
         spdlog::error("Error: Unable to create FBX Manager!");
         return false;
     }
@@ -216,8 +220,7 @@ bool exportScene(const std::vector<parser::SceneNode>& parsedSceneNodes, const s
     fbxManager->LoadPluginsDirectory(applicationPath.Buffer());
 
     FbxScene* fbxScene = FbxScene::Create(fbxManager, "Dreamachine Scene");
-    if (!fbxScene)
-    {
+    if (!fbxScene) {
         spdlog::error("Error: Unable to create FBX scene!");
         return false;
     }

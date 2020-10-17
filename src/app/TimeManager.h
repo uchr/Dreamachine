@@ -1,6 +1,9 @@
 #pragma once
 
+#pragma warning(push)
+#pragma warning(disable : 5054)
 #include <QElapsedTimer>
+#pragma warning(pop)
 
 class TimeManager {
 public:

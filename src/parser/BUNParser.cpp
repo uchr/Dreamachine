@@ -7,8 +7,7 @@
 #include <array>
 #include <cassert>
 
-namespace parser
-{
+namespace parser {
 
 StreamFormat parseStreamFormat(BinReader& binReader) {
     StreamFormat streamFormat;
@@ -20,8 +19,7 @@ StreamFormat parseStreamFormat(BinReader& binReader) {
 }
 
 BUNParser::BUNParser(std::filesystem::path path)
-    : m_path(std::move(path))
-{
+        : m_path(std::move(path)) {
     PAKParser::instance().tryExtract(m_path);
 }
 
@@ -34,16 +32,14 @@ BundleHeader BUNParser::parseHeader() {
     spdlog::debug("Reading textures");
     int numberOfTextures = binReader.read<int32_t>();
     std::vector<std::string> textures(numberOfTextures);
-    for (int i = 0; i < numberOfTextures; ++i)
-    {
+    for (int i = 0; i < numberOfTextures; ++i) {
         int len = binReader.readByte();
         textures[i] = binReader.readStringLine();
     }
 
     int numberOfDataHeaders = binReader.read<int32_t>();
     std::vector<VertexDataHeader> dataHeader(numberOfDataHeaders);
-    for (int i = 0; i < numberOfDataHeaders; ++i)
-    {
+    for (int i = 0; i < numberOfDataHeaders; ++i) {
         dataHeader[i].vertexSize = binReader.read<int32_t>();
         dataHeader[i].length = binReader.read<int32_t>();
         dataHeader[i].posStart = binReader.getPosition();
@@ -66,8 +62,7 @@ BundleHeader BUNParser::parseHeader() {
         streamFormats[i] = parseStreamFormat(binReader);
 
     int dataIndex = 0;
-    for (int i = 0; i < numberOfFiles; ++i)
-    {
+    for (int i = 0; i < numberOfFiles; ++i) {
         binReader.setPosition(fileEntries[i].posStart + posZero);
         std::vector<char> smrNameBuffer = binReader.readChars(0x80);
         fileEntries[i].smrName = std::string(smrNameBuffer.begin(), std::find(smrNameBuffer.begin(), smrNameBuffer.end(), '\0'));
@@ -76,24 +71,21 @@ BundleHeader BUNParser::parseHeader() {
         for (int j = 0; j < numberOfMeshes; ++j)
             fileEntries[i].meshEntries[j].posStart = binReader.read<uint32_t>();
 
-        for (int j = 0; j < numberOfMeshes; ++j)
-        {
+        for (int j = 0; j < numberOfMeshes; ++j) {
             binReader.setPosition(fileEntries[i].meshEntries[j].posStart + posZero);
             binReader.setPosition(binReader.read<int32_t>() + posZero);
             fileEntries[i].meshEntries[j].name = binReader.readStringLine();
             fileEntries[i].meshEntries[j].dataIndex = dataIndex;
             binReader.setPosition(fileEntries[i].meshEntries[j].posStart + 0x54 + posZero);
             int numberParts = binReader.read<int32_t>();
-            for (int k = 0; k < numberParts; ++k)
-            {
+            for (int k = 0; k < numberParts; ++k) {
                 binReader.setPosition(fileEntries[i].meshEntries[j].posStart + 0x58 + k * 4 + posZero);
                 binReader.setPosition(binReader.read<int32_t>() + 0x50 + posZero);
                 int frmt = binReader.read<int32_t>();
                 int formatIndex = (frmt / 4 - numberOfFiles - 3) / 18;
                 int bitcode = binReader.read<int32_t>();
                 int usage = binReader.read<int32_t>();
-                if (bitcode != 0 && frmt != 0 && streamFormats[formatIndex].size != 0)
-                {
+                if (bitcode != 0 && frmt != 0 && streamFormats[formatIndex].size != 0) {
                     binReader.shiftPosition(0x6c);
                     dataIndex += binReader.read<int32_t>();
                 }
@@ -111,4 +103,4 @@ BundleHeader BUNParser::parseHeader() {
     return bundleHeader;
 }
 
-}
+} // namespace parser

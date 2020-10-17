@@ -11,13 +11,12 @@
 #include <QOpenGLWidget>
 #pragma warning(pop)
 
-namespace parser
-{
+namespace parser {
 struct SceneIndex;
 }
 class ViewScene;
 
-class View: public QOpenGLWidget {
+class View : public QOpenGLWidget {
 public:
     explicit View(Magnum::Platform::GLContext& context, QWidget* parent);
     ~View();
@@ -32,12 +31,12 @@ private:
     void paintGL() override;
     void resizeGL(int width, int height) override;
 
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
+    void mousePressEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
+    void mouseMoveEvent(QMouseEvent* event) override;
 
-    void keyPressEvent(QKeyEvent *event) override;
-    void keyReleaseEvent(QKeyEvent *event) override;
+    void keyPressEvent(QKeyEvent* event) override;
+    void keyReleaseEvent(QKeyEvent* event) override;
 
     std::vector<size_t> m_meshToLoading;
     std::vector<size_t> m_meshToUnloading;

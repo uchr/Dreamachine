@@ -1,8 +1,7 @@
 #include "BundleHeader.h"
 #include "BinReader.h"
 
-namespace parser
-{
+namespace parser {
 
 bool PartHeader::load(BinReader& binReader) {
     for (size_t i = 0; i < cfArray.size(); ++i)
@@ -51,8 +50,10 @@ bool PartHeader::load(BinReader& binReader) {
 }
 
 bool PartTexInfo::load(BinReader& binReader, int numTexStages) {
-    cf1 = binReader.read<uint32_t>(); cf2 = binReader.read<uint32_t>();
-    posTex = binReader.read<uint32_t>(); unknown = binReader.read<int32_t>();
+    cf1 = binReader.read<uint32_t>();
+    cf2 = binReader.read<uint32_t>();
+    posTex = binReader.read<uint32_t>();
+    unknown = binReader.read<int32_t>();
     texIdx = binReader.readTable<int32_t>(numTexStages, posTex);
     return true;
 }
@@ -61,13 +62,14 @@ bool MeshPartInfo::load(BinReader& binReader) {
     header.load(binReader);
     posTextures = binReader.readTable<uint32_t>(header.numTextures, 0);
     magic = binReader.readTable<uint32_t>(header.numMagic, header.posMagic);
-    binReader.Assert(header.posIdx); indices = binReader.readChars(header.numIdx * 2);
+    binReader.Assert(header.posIdx);
+    indices = binReader.readChars(header.numIdx * 2);
     boneUsage = binReader.readTable<uint16_t>(header.numBoneUsage, header.posBoneUsage);
     boneVertices = binReader.readTable<uint16_t>(header.numBoneStages, header.posBoneVerts);
     boneIndices = binReader.readTable<uint16_t>(header.numBoneStages, header.posBoneIdx);
     boneAssign = (header.posBoneAssign == 0)
-               ? std::nullopt
-               : std::make_optional<std::vector<uint16_t>>(binReader.readTable<uint16_t>(header.numBoneStages, header.posBoneAssign));
+                     ? std::nullopt
+                     : std::make_optional<std::vector<uint16_t>>(binReader.readTable<uint16_t>(header.numBoneStages, header.posBoneAssign));
     tax1 = binReader.readTable<uint32_t>(header.numTax1, header.posTax1);
     tax2 = binReader.readTable<uint32_t>(header.numTax2, header.posTax2);
     tax3 = binReader.readTable<uint32_t>(header.numTax3, header.posTax3);
@@ -75,12 +77,18 @@ bool MeshPartInfo::load(BinReader& binReader) {
     xTable = binReader.readChars(header.lenXTable);
     stageVertices = binReader.readTable<int32_t>(header.numTexStages, header.posStageVerts);
     stageIndices = binReader.readTable<int32_t>(header.numTexStages, header.posStageIdx);
-    stageC = (header.posStageC == 0) ? std::nullopt : std::make_optional<std::vector<int32_t>>(binReader.readTable<int32_t>(header.numTexStages, header.posStageC));
-    stageAssign = binReader.readTable<int32_t>(header.numTexStages, header.posStageAssign);;
+    stageC = (header.posStageC == 0)
+                 ? std::nullopt
+                 : std::make_optional<std::vector<int32_t>>(binReader.readTable<int32_t>(header.numTexStages, header.posStageC));
+    stageAssign = binReader.readTable<int32_t>(header.numTexStages, header.posStageAssign);
+    ;
     animKeys = binReader.readTable<float>(header.numAnim, header.posAnim);
-    if ((header.usage & 1) != 0) bonus1 = binReader.readTable<uint32_t>(3 * header.numVertices, header.posBonus[0]);
-    if ((header.usage & 2) != 0) bonus2 = binReader.readTable<uint32_t>(3 * header.numVertices, header.posBonus[1]);
-    if (header.numIdxBonus != 0 && binReader.IsPos(header.posIdxBonus)) idxBonus = binReader.readTable<uint32_t>( header.numIdxBonus, 0);
+    if ((header.usage & 1) != 0)
+        bonus1 = binReader.readTable<uint32_t>(3 * header.numVertices, header.posBonus[0]);
+    if ((header.usage & 2) != 0)
+        bonus2 = binReader.readTable<uint32_t>(3 * header.numVertices, header.posBonus[1]);
+    if (header.numIdxBonus != 0 && binReader.IsPos(header.posIdxBonus))
+        idxBonus = binReader.readTable<uint32_t>(header.numIdxBonus, 0);
     tex.resize(header.numTextures);
     for (int i = 0; i < header.numTextures; ++i)
         tex[i].load(binReader, header.numTexStages);
@@ -131,4 +139,4 @@ bool MeshInfo::load(BinReader& binReader) {
     return !parts.empty();
 }
 
-}
+} // namespace parser

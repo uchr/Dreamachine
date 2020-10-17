@@ -3,15 +3,13 @@
 #include "BinReader.h"
 
 #include <filesystem>
-#include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
-namespace parser
-{
+namespace parser {
 
-struct PAKFileEntry
-{
+struct PAKFileEntry {
     uint32_t offset;
     int32_t size;
     int32_t hOffset, hLen, hRef;
@@ -22,8 +20,7 @@ struct PAKFileEntry
     bool isRealFile() const;
 };
 
-struct PAKIndex
-{
+struct PAKIndex {
     PAKIndex() = default;
     PAKIndex(const std::filesystem::path& path);
 
@@ -32,8 +29,7 @@ struct PAKIndex
     std::filesystem::path path;
 };
 
-class PAKParser
-{
+class PAKParser {
 public:
     static PAKParser& instance(); // TODO: Remove
 
@@ -53,4 +49,4 @@ private:
     std::unordered_set<std::string> m_extracted;
 };
 
-}
+} // namespace parser

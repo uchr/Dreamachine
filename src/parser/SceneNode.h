@@ -1,15 +1,14 @@
 #pragma once
 
-#include "Mesh.h"
 #include "Light.h"
+#include "Mesh.h"
 
 #include <Magnum/Magnum.h>
 #include <Magnum/Math/Matrix4.h>
 
 #include <optional>
 
-namespace parser
-{
+namespace parser {
 
 struct Transofrmation {
     Vector3 translation;
@@ -17,8 +16,7 @@ struct Transofrmation {
     float scale;
 };
 
-struct SceneNode
-{
+struct SceneNode {
     std::string name;
 
     std::optional<Mesh> mesh;
@@ -39,4 +37,4 @@ struct SceneNode
     void print() const;
 };
 
-}
+} // namespace parser

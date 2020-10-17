@@ -2,11 +2,9 @@
 
 #include <sstream>
 
-namespace parser
-{
+namespace parser {
 
-SharkNode* getNode(SharkNode* parent, const std::string& name)
-{
+SharkNode* getNode(SharkNode* parent, const std::string& name) {
     if (parent->type != SharkNodeType::Sub)
         return nullptr;
 
@@ -17,8 +15,7 @@ SharkNode* getNode(SharkNode* parent, const std::string& name)
     return nullptr;
 }
 
-void print(SharkNode* node, std::ostream& out, const std::string& offset)
-{
+void print(SharkNode* node, std::ostream& out, const std::string& offset) {
     out << offset << node->name;
     if (node->type == SharkNodeType::Int)
         out << " = " << dynamic_cast<SharkNodeValue<int64_t>*>(node)->value;
@@ -28,7 +25,7 @@ void print(SharkNode* node, std::ostream& out, const std::string& offset)
         out << " = " << dynamic_cast<SharkNodeValue<std::string>*>(node)->value;
     if (node->type == SharkNodeType::Sub)
         out << ": (s)";
-    
+
     if (node->type == SharkNodeType::ArrayInt)
         out << " = int[" << node->count() << "]";
     if (node->type == SharkNodeType::ArrayFloat)
@@ -54,4 +51,4 @@ void print(SharkNode* node, std::ostream& out, const std::string& offset)
     }
 }
 
-}
+} // namespace parser

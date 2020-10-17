@@ -3,19 +3,16 @@
 #include <string>
 #include <vector>
 
-namespace parser
-{
+namespace parser {
 
-struct SirEntry
-{
+struct SirEntry {
     std::string filename;
     std::string sirPath;
 };
 
-struct SceneIndex
-{
+struct SceneIndex {
     std::string bundleName;
     std::vector<SirEntry> sirs;
 };
 
-}
+} // namespace parser

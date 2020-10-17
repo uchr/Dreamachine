@@ -2,14 +2,12 @@
 
 #include "Geometry.h"
 
-namespace  parser
-{
+namespace parser {
 
-struct PointLight
-{
+struct PointLight {
     Vector3 color;
     Vector3 position;
     float intencity;
 };
 
-}
+} // namespace parser
