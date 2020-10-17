@@ -1,6 +1,8 @@
 #include "View.h"
 #include "ViewScene.h"
 
+#include <parser/SceneIndex.h>
+
 #include <Magnum/GL/Renderer.h>
 #include <Magnum/GL/Framebuffer.h>
 
@@ -26,6 +28,10 @@ void View::unload(size_t sirIndex) {
 }
 
 void View::setSceneIndex(parser::SceneIndex* sceneIndex) {
+    if (m_sceneIndex) {
+        for (size_t i = 0; i < m_sceneIndex->sirs.size(); ++i)
+            m_meshToUnloading.push_back(i);
+    }
     m_sceneIndex = sceneIndex;
     m_viewScene->setSceneIndex(sceneIndex);
 }

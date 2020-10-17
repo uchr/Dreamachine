@@ -107,6 +107,8 @@ void MainWindow::loadBundle(const std::string& bundleName) {
 }
 
 void MainWindow::fillList() {
+    m_list->clear();
+
     QStringList strList;
     for (const auto& sir : m_sceneIndex->sirs)
         strList.append(QString::fromStdString(sir.filename));
@@ -119,7 +121,6 @@ void MainWindow::fillList() {
         else
             item->setFlags(Qt::NoItemFlags);
         item->setCheckState(Qt::Unchecked);
-        item->setData(Qt::UserRole + 1, QVariant(sirIndex));
     }
 }
 
