@@ -14,6 +14,7 @@ struct SceneIndex;
 struct SceneNode;
 }
 class View;
+class BundleListWindow;
 
 QT_FORWARD_DECLARE_CLASS(QListWidget)
 QT_FORWARD_DECLARE_CLASS(QListWidgetItem)
@@ -23,11 +24,17 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow(Magnum::Platform::GLContext& context, const parser::SceneIndex& sceneIndex);
+    MainWindow(Magnum::Platform::GLContext& context);
+    ~MainWindow();
 
     void onItemChanged(QListWidgetItem* item);
+
     void doExportAsSingleMesh();
     void doExportAsMultipleMeshes();
+
+    void showSelectBundleWindow();
+
+    void loadBundle(const std::string& bundleName);
 
 private:
     void fillList();
@@ -37,5 +44,7 @@ private:
     QListWidget* m_list;
     View* m_glView;
 
-    const parser::SceneIndex& m_sceneIndex;
+    BundleListWindow* m_bundleListWindow;
+
+    std::unique_ptr<parser::SceneIndex> m_sceneIndex;
 };

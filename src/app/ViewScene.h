@@ -24,10 +24,12 @@ using Scene3D = Magnum::SceneGraph::Scene<Magnum::SceneGraph::MatrixTransformati
 
 class ViewScene {
 public:
-    ViewScene(const parser::SceneIndex& sceneIndex, const InputManager& inputManager, const TimeManager& timeManager);
+    ViewScene(const InputManager& inputManager, const TimeManager& timeManager);
 
     void load(size_t sirIndex);
     void unload(size_t sirIndex);
+
+    void setSceneIndex(parser::SceneIndex* sceneIndex);
     
     void draw();
     void setViewport(int width, int height);
@@ -63,7 +65,8 @@ private:
 
     const TimeManager& m_timeManager;
     const InputManager& m_inputManager;
-    const parser::SceneIndex& m_sceneIndex;
+
+    parser::SceneIndex* m_sceneIndex = nullptr;
 
     const float CameraMovementSpeed = 20.0f;
     const float CameraRotationSpeed = 3.0f;

@@ -1,6 +1,8 @@
 #include "View.h"
 #include "ViewScene.h"
 
+#include <parser/SceneIndex.h>
+
 #include <Magnum/GL/Renderer.h>
 #include <Magnum/GL/Framebuffer.h>
 
@@ -9,10 +11,9 @@
 using namespace Magnum;
 using namespace Math::Literals;
 
-View::View(Platform::GLContext& context, QWidget* parent, const parser::SceneIndex& sceneIndex)
+View::View(Platform::GLContext& context, QWidget* parent)
     : QOpenGLWidget(parent)
     , m_context(context)
-    , m_sceneIndex(sceneIndex)
 {
 }
 
@@ -26,13 +27,22 @@ void View::unload(size_t sirIndex) {
     m_meshToUnloading.push_back(sirIndex);
 }
 
+void View::setSceneIndex(parser::SceneIndex* sceneIndex) {
+    if (m_sceneIndex) {
+        for (size_t i = 0; i < m_sceneIndex->sirs.size(); ++i)
+            m_meshToUnloading.push_back(i);
+    }
+    m_sceneIndex = sceneIndex;
+    m_viewScene->setSceneIndex(sceneIndex);
+}
+
 void View::initializeGL() {
     m_context.create();
 
     GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
     GL::Renderer::enable(GL::Renderer::Feature::FaceCulling);
 
-    m_viewScene = std::make_unique<ViewScene>(m_sceneIndex, m_inputManager, m_timeManager);
+    m_viewScene = std::make_unique<ViewScene>(m_inputManager, m_timeManager);
     m_timeManager.init();
 
     /* Clean up Magnum state when giving control back to Qt */

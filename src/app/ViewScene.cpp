@@ -97,9 +97,8 @@ Trade::MeshData3D createMeshData(const parser::Mesh& mesh, size_t meshPartIndex)
 }
 }
 
-ViewScene::ViewScene(const parser::SceneIndex& sceneIndex, const InputManager& inputManager, const TimeManager& timeManager)
-    : m_sceneIndex(sceneIndex)
-    , m_inputManager(inputManager)
+ViewScene::ViewScene(const InputManager& inputManager, const TimeManager& timeManager)
+    : m_inputManager(inputManager)
     , m_timeManager(timeManager)
     , m_texturedShader(Shaders::Phong::Flag::DiffuseTexture | Shaders::Phong::Flag::AmbientTexture)
 {
@@ -121,8 +120,9 @@ ViewScene::ViewScene(const parser::SceneIndex& sceneIndex, const InputManager& i
 void ViewScene::load(size_t sirIndex) {
     if (m_drawables.contains(sirIndex))
         return;
-    
-    std::unique_ptr<parser::SceneParser> scene = std::make_unique<parser::SceneParser>(m_sceneIndex.sirs[sirIndex], m_sceneIndex.bundleName);
+
+    assert(m_sceneIndex);
+    std::unique_ptr<parser::SceneParser> scene = std::make_unique<parser::SceneParser>(m_sceneIndex->sirs[sirIndex], m_sceneIndex->bundleName);
     if (!scene->sceneRoot.has_value())
         return;
 
@@ -137,6 +137,10 @@ void ViewScene::load(size_t sirIndex) {
 void ViewScene::unload(size_t sirIndex) {
     if (m_drawables.contains(sirIndex))
         m_drawables.erase(sirIndex);
+}
+
+void ViewScene::setSceneIndex(parser::SceneIndex* sceneIndex) {
+    m_sceneIndex = sceneIndex;
 }
 
 void ViewScene::draw() {

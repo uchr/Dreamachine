@@ -1,5 +1,6 @@
 #include "SceneParser.h"
 
+#include "CommonPath.h"
 #include "BinReader.h"
 #include "BUNParser.h"
 #include "Mesh.h"
@@ -133,7 +134,7 @@ void SceneParser::loadScene(const std::filesystem::path& sirPath, const std::str
 }
 
 void SceneParser::loadBundle(const std::string& bundleName) {
-    BUNParser bunParser("bundles/" + bundleName + ".bun");
+    BUNParser bunParser(bundlesFolderPath / (bundleName + ".bun"));
     m_bundleName = bundleName;
     m_bundleHeader = bunParser.parseHeader();
 }
@@ -215,7 +216,7 @@ std::optional<SceneNode> SceneParser::loadHierarchy(SharkNode* node, const std::
 }
 
 std::optional<Mesh> SceneParser::loadMesh(const std::string& smrFile, const std::string& modelName, float& outScale) {
-    BinReaderMmap binReader("bundles/" + m_bundleName + ".bun");
+    BinReaderMmap binReader(bundlesFolderPath / (m_bundleName + ".bun"));
 
     BundleHeader& header = m_bundleHeader;
 

@@ -41,6 +41,7 @@ find_library(DIRECTXTEX_LIB_DEBUG
 set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
 add_executable(Dreamachine
+    BundleListWindow.cpp
     InputManager.cpp
     main.cpp
     MainWindow.cpp

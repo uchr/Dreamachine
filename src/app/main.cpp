@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
         format.setProfile(QSurfaceFormat::CoreProfile);
         QSurfaceFormat::setDefaultFormat(format);
 
-        MainWindow mw{context, sceneIndex};
+        MainWindow mw{context};
         mw.resize(1366, 768);
         mw.show();
 
