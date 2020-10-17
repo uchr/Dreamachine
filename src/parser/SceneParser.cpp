@@ -4,7 +4,7 @@
 #include "BinReader.h"
 #include "CommonPath.h"
 #include "Mesh.h"
-#include "PAKParser.h"
+#include "PackageParser.h"
 #include "SceneNode.h"
 #include "SharkNode.h"
 #include "SharkParser.h"

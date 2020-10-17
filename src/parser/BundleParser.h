@@ -8,6 +8,7 @@
 
 namespace parser {
 
+// For parsing .bun files
 class BundleParser {
 public:
     BundleParser(std::filesystem::path path);

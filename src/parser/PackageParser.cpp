@@ -1,4 +1,4 @@
-#include "PAKParser.h"
+#include "PackageParser.h"
 #include "Utils.h"
 
 #include <spdlog/spdlog.h>
@@ -31,7 +31,7 @@ int char2hex(char c) {
 
 namespace parser {
 
-PAKFileEntry::PAKFileEntry(BinReader& binReader) {
+PackageFileEntry::PackageFileEntry(BinReader& binReader) {
     offset = binReader.read<uint32_t>();
     size = binReader.read<int32_t>();
     hOffset = binReader.read<int32_t>();
@@ -41,7 +41,7 @@ PAKFileEntry::PAKFileEntry(BinReader& binReader) {
         --hLen;
 }
 
-void PAKFileEntry::fillIn(const std::vector<char>& nameBlock) {
+void PackageFileEntry::fillIn(const std::vector<char>& nameBlock) {
     for (int i = hRef; i < nameBlock.size(); i++) {
         if (nameBlock[i] == 0)
             break;
@@ -49,11 +49,11 @@ void PAKFileEntry::fillIn(const std::vector<char>& nameBlock) {
     }
 }
 
-bool PAKFileEntry::isRealFile() const {
+bool PackageFileEntry::isRealFile() const {
     return size > 0;
 }
 
-PAKIndex::PAKIndex(const std::filesystem::path& path)
+PackageIndex::PackageIndex(const std::filesystem::path& path)
         : path(path) {
     BinReaderMmap binReader(path);
 
@@ -84,20 +84,20 @@ PAKIndex::PAKIndex(const std::filesystem::path& path)
         entry.fillIn(nameBlock);
 }
 
-PAKParser& PAKParser::instance() {
-    static PAKParser pakParser;
-    return pakParser;
+PackageParser& PackageParser::instance() {
+    static PackageParser packageParser;
+    return packageParser;
 }
 
-PAKParser::PAKParser(const std::filesystem::path& path) {
+PackageParser::PackageParser(const std::filesystem::path& path) {
     for (auto& childIt : std::filesystem::directory_iterator(path)) {
         auto childPath = childIt.path();
         if (childPath.extension().string() == ".pak")
-            m_pakIndices[Utils::getFilenameWithoutExtension(childPath)] = PAKIndex(childPath);
+            m_pakIndices[Utils::getFilenameWithoutExtension(childPath)] = PackageIndex(childPath);
     }
 }
 
-void PAKParser::tryExtract(const std::filesystem::path& path) {
+void PackageParser::tryExtract(const std::filesystem::path& path) {
     if (m_extracted.contains(path.string()))
         return;
 
@@ -105,8 +105,8 @@ void PAKParser::tryExtract(const std::filesystem::path& path) {
     std::replace(innerPath.begin(), innerPath.end(), '/', '\\');
     spdlog::debug("Try to extract {}", innerPath);
 
-    PAKIndex* pakIndex = nullptr;
-    PAKFileEntry* entry = nullptr;
+    PackageIndex* pakIndex = nullptr;
+    PackageFileEntry* entry = nullptr;
     for (auto& it : m_pakIndices) {
         entry = findFile(it.second, innerPath);
         if (entry != nullptr) {
@@ -125,7 +125,7 @@ void PAKParser::tryExtract(const std::filesystem::path& path) {
     }
 }
 
-void PAKParser::extract(const PAKIndex& pakIndex, const PAKFileEntry& entry, const std::filesystem::path& outputPath) const {
+void PackageParser::extract(const PackageIndex& pakIndex, const PackageFileEntry& entry, const std::filesystem::path& outputPath) const {
     std::filesystem::create_directories(outputPath.parent_path());
     std::ofstream out(outputPath.string(), std::ios::binary);
     assert(out.is_open());
@@ -134,13 +134,13 @@ void PAKParser::extract(const PAKIndex& pakIndex, const PAKFileEntry& entry, con
     out.write(binReader.data(), entry.size);
 }
 
-PAKFileEntry* PAKParser::findFile(PAKIndex& pakIndex, std::string innerPath) const {
+PackageFileEntry* PackageParser::findFile(PackageIndex& pakIndex, std::string innerPath) const {
     std::transform(innerPath.begin(), innerPath.end(), innerPath.begin(), [](unsigned char c) { return std::tolower(c); });
 
     return findFile(pakIndex, innerPath, "", 0);
 }
 
-PAKFileEntry* PAKParser::findFile(PAKIndex& pakIndex, std::string innerPathLeft, std::string innerPathPassed, int offset) const {
+PackageFileEntry* PackageParser::findFile(PackageIndex& pakIndex, std::string innerPathLeft, std::string innerPathPassed, int offset) const {
     int num = char2hex(innerPathLeft[0]);
     if (num < 0)
         return nullptr;

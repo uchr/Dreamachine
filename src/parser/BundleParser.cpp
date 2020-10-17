@@ -1,6 +1,6 @@
 #include "BundleParser.h"
 #include "BinReader.h"
-#include "PAKParser.h"
+#include "PackageParser.h"
 
 #include <spdlog/spdlog.h>
 
@@ -20,7 +20,7 @@ StreamFormat parseStreamFormat(BinReader& binReader) {
 
 BundleParser::BundleParser(std::filesystem::path path)
         : m_path(std::move(path)) {
-    PAKParser::instance().tryExtract(m_path);
+    PackageParser::instance().tryExtract(m_path);
 }
 
 BundleHeader BundleParser::parseHeader() {

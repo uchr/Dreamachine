@@ -5,7 +5,7 @@ add_library(parser
     BinReader.cpp
     BundleHeader.cpp
     BundleParser.cpp
-    PAKParser.cpp
+    PackageParser.cpp
     SceneNode.cpp
     SceneParser.cpp
     SharkNode.cpp
