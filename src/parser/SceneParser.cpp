@@ -1,6 +1,6 @@
 #include "SceneParser.h"
 
-#include "BUNParser.h"
+#include "BundleParser.h"
 #include "BinReader.h"
 #include "CommonPath.h"
 #include "Mesh.h"
@@ -132,9 +132,9 @@ void SceneParser::loadScene(const std::filesystem::path& sirPath, const std::str
 }
 
 void SceneParser::loadBundle(const std::string& bundleName) {
-    BUNParser bunParser(bundlesFolderPath / (bundleName + ".bun"));
+    BundleParser bundleParser(bundlesFolderPath / (bundleName + ".bun"));
     m_bundleName = bundleName;
-    m_bundleHeader = bunParser.parseHeader();
+    m_bundleHeader = bundleParser.parseHeader();
 }
 
 void SceneParser::addScene(const std::filesystem::path& sirPath) {

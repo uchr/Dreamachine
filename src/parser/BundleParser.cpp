@@ -1,4 +1,4 @@
-#include "BUNParser.h"
+#include "BundleParser.h"
 #include "BinReader.h"
 #include "PAKParser.h"
 
@@ -18,12 +18,12 @@ StreamFormat parseStreamFormat(BinReader& binReader) {
     return streamFormat;
 }
 
-BUNParser::BUNParser(std::filesystem::path path)
+BundleParser::BundleParser(std::filesystem::path path)
         : m_path(std::move(path)) {
     PAKParser::instance().tryExtract(m_path);
 }
 
-BundleHeader BUNParser::parseHeader() {
+BundleHeader BundleParser::parseHeader() {
     BinReaderMmap binReader(m_path);
 
     spdlog::debug("Parse bun header");

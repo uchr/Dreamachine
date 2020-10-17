@@ -8,9 +8,9 @@
 
 namespace parser {
 
-class BUNParser {
+class BundleParser {
 public:
-    BUNParser(std::filesystem::path path);
+    BundleParser(std::filesystem::path path);
     BundleHeader parseHeader();
 
 private:

@@ -4,7 +4,7 @@ find_package(spdlog CONFIG REQUIRED)
 add_library(parser
     BinReader.cpp
     BundleHeader.cpp
-    BUNParser.cpp
+    BundleParser.cpp
     PAKParser.cpp
     SceneNode.cpp
     SceneParser.cpp
