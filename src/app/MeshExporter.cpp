@@ -219,7 +219,7 @@ bool exportScene(const std::vector<parser::SceneNode>& parsedSceneNodes, const s
     FbxString applicationPath = FbxGetApplicationDirectory();
     fbxManager->LoadPluginsDirectory(applicationPath.Buffer());
 
-    FbxScene* fbxScene = FbxScene::Create(fbxManager, "Dreamachine Scene");
+    FbxScene* fbxScene = FbxScene::Create(fbxManager, "DreamfallTLJViewer Scene");
     if (!fbxScene) {
         spdlog::error("Error: Unable to create FBX scene!");
         return false;

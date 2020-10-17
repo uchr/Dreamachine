@@ -79,8 +79,10 @@ int main(int argc, char** argv) {
         return 0;
     }
     else {
+        const QString appName = "Dreamfall:TLJ Viewer";
         Magnum::Platform::GLContext context{Magnum::NoCreate, argc, argv};
         QApplication app{argc, argv};
+        app.setApplicationName(appName);
 
         QSurfaceFormat format;
         format.setVersion(4, 6);
@@ -88,6 +90,7 @@ int main(int argc, char** argv) {
         QSurfaceFormat::setDefaultFormat(format);
 
         MainWindow mw{context};
+        mw.setWindowTitle(appName);
         mw.resize(1366, 768);
         mw.show();
 

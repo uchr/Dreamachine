@@ -40,7 +40,7 @@ find_library(DIRECTXTEX_LIB_DEBUG
 
 set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
-add_executable(Dreamachine
+add_executable(DreamfallTLJViewer
     BundleListWindow.cpp
     InputManager.cpp
     main.cpp
@@ -53,16 +53,16 @@ add_executable(Dreamachine
 
 if (FBXSDK_FOUND)
   include_directories(${FBXSDK_INCLUDE_DIRS})
-  target_link_libraries(Dreamachine PRIVATE optimized ${FBXSDK_LIBRARIES})
-  target_link_libraries(Dreamachine PRIVATE debug ${FBXSDK_LIBRARIES_DEBUG})
+  target_link_libraries(DreamfallTLJViewer PRIVATE optimized ${FBXSDK_LIBRARIES})
+  target_link_libraries(DreamfallTLJViewer PRIVATE debug ${FBXSDK_LIBRARIES_DEBUG})
 endif (FBXSDK_FOUND)
 
-set_target_properties(Dreamachine
+set_target_properties(DreamfallTLJViewer
     PROPERTIES
     CMAKE_AUTOMOC ON
 )
 
-target_link_libraries(Dreamachine PRIVATE
+target_link_libraries(DreamfallTLJViewer PRIVATE
     Corrade::Main
     Magnum::GLContext
     Magnum::GL
@@ -81,13 +81,13 @@ target_link_libraries(Dreamachine PRIVATE
     "d3d11.lib"
 )
 
-target_link_libraries(Dreamachine PRIVATE optimized ${DIRECTXTEX_LIB})
-target_link_libraries(Dreamachine PRIVATE debug ${DIRECTXTEX_LIB_DEBUG})
+target_link_libraries(DreamfallTLJViewer PRIVATE optimized ${DIRECTXTEX_LIB})
+target_link_libraries(DreamfallTLJViewer PRIVATE debug ${DIRECTXTEX_LIB_DEBUG})
 
-add_custom_command(TARGET Dreamachine POST_BUILD 
+add_custom_command(TARGET DreamfallTLJViewer POST_BUILD 
                    COMMAND ${CMAKE_COMMAND} -E copy_if_different
                    ${FBXSDK_DLL}
-                   $<TARGET_FILE_DIR:Dreamachine>)
+                   $<TARGET_FILE_DIR:DreamfallTLJViewer>)
 
 # Make the executable a default target to build & run in Visual Studio
-set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Dreamachine)
+set_property(DIRECTORY ${PROJECT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT DreamfallTLJViewer)
