@@ -1,7 +1,7 @@
 #include "TextureParser.h"
 #include "BinReader.h"
 #include "Mesh.h"
-#include "PAKParser.h"
+#include "PackageParser.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
@@ -256,7 +256,7 @@ void parseTextures(MeshPart& meshPart, const std::vector<std::filesystem::path>&
         if (texturesPath[i] == "")
             continue;
 
-        PAKParser::instance().tryExtract(texturesPath[i]);
+        PackageParser::instance().tryExtract(texturesPath[i]);
 
         std::filesystem::path exportPath = exportFolder / texturesPath[i];
         bool isLoaded = std::filesystem::exists(exportPath);

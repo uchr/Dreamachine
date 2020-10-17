@@ -1,7 +1,7 @@
 #include "MainWindow.h"
 #include "MeshExporter.h"
 
-#include <parser/PAKParser.h>
+#include <parser/PackageParser.h>
 #include <parser/SceneParser.h>
 #include <parser/SharkParser.h>
 
@@ -23,7 +23,7 @@ using namespace parser;
 
 int main(int argc, char** argv) {
     const char* dreamfallTLJResPath = std::getenv("DreamfallTLJResPath");
-    PAKParser::instance() = PAKParser(dreamfallTLJResPath);
+    PackageParser::instance() = PackageParser(dreamfallTLJResPath);
 
     CLI::App cliapp{"Tool for extracting assets from Dreamfall: The Longest Journey"};
 

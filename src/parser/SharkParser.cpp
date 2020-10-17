@@ -1,6 +1,6 @@
 #include "SharkParser.h"
 #include "BinReader.h"
-#include "PAKParser.h"
+#include "PackageParser.h"
 #include "Utils.h"
 
 #include <spdlog/spdlog.h>
@@ -45,7 +45,7 @@ std::vector<std::string> getBpr(SharkNode* root) {
 }
 
 SharkParser::SharkParser(const std::filesystem::path& path) {
-    PAKParser::instance().tryExtract(path);
+    PackageParser::instance().tryExtract(path);
     BinReaderMmap binReader(path);
     if (binReader.readStringLine() != magic || binReader.readStringLine() != "2x4")
         throw std::exception("shark3d binary magic wrong");
