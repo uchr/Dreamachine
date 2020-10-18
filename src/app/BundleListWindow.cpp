@@ -41,6 +41,9 @@ void BundleListWindow::doLoadBundle() {
 }
 
 void BundleListWindow::fillBundleList() {
+    if (!std::filesystem::exists(bundlesFolderPath))
+        return;
+
     QStringList strList;
     for (auto& bundlePath : std::filesystem::directory_iterator(bundlesFolderPath))
         strList.append(QString::fromStdString(bundlePath.path().string()));

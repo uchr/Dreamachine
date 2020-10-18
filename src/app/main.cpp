@@ -25,6 +25,12 @@ int main(int argc, char** argv) {
     const char* dreamfallTLJResPath = std::getenv("DreamfallTLJResPath");
     PackageParser::instance() = PackageParser(dreamfallTLJResPath);
 
+    auto bundleNames = PackageParser::instance().filenamesWithExtension(".bun");
+    for (const auto& bundleName : bundleNames) {
+        spdlog::info(bundleName);
+        PackageParser::instance().tryExtract(bundleName);
+    }
+
     CLI::App cliapp{"Tool for extracting assets from Dreamfall: The Longest Journey"};
 
     bool isDebugLog = false;
@@ -43,16 +49,16 @@ int main(int argc, char** argv) {
     if (isDebugLog)
         spdlog::set_level(spdlog::level::debug);
 
-    std::filesystem::path sceneSDRPath = "data/generated/locations/" + bundleName + ".cdr";
-    SharkParser sceneSharkParser(sceneSDRPath);
-    SceneIndex sceneIndex = sceneSharkParser.parseScene(bundleName);
-
     if (isExportMode) {
         HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
         if (FAILED(hr)) {
             spdlog::critical("DirectXTex failed initialization");
             return 1;
         }
+
+        std::filesystem::path sceneSDRPath = "data/generated/locations/" + bundleName + ".cdr";
+        SharkParser sceneSharkParser(sceneSDRPath);
+        SceneIndex sceneIndex = sceneSharkParser.parseScene(bundleName);
 
         for (const auto& sir : sceneIndex.sirs) {
             if (sir.filename.find("anim") == 0)

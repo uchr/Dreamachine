@@ -3,6 +3,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <string>
@@ -15,7 +16,7 @@ const std::vector<char> charTable{'\0', 'a', 'b',  'c', 'd', 'e', 'f', 'g', 'h',
                                   '-',  '_', '\'', '.', '0', '1', '2', '3', '4', '5', '6', '7', '8',  '9'};
 
 char hex2char(int a) {
-    if (a > charTable.size())
+    if (a >= charTable.size())
         return '?';
     return charTable[a];
 }
@@ -74,8 +75,10 @@ PackageIndex::PackageIndex(const std::filesystem::path& path)
         entries.emplace_back(binReader);
 
     std::vector<char> byteBlock = binReader.readChars(byteCount);
-    for (uint32_t i = 0; i < byteCount; ++i)
-        nameBlock[i] = hex2char((byteBlock[i]));
+    for (uint32_t i = 0; i < byteCount; ++i) {
+        nameBlock[i] = hex2char(static_cast<int>(byteBlock[i]));
+        assert(static_cast<int>(byteBlock[i]) == char2hex(hex2char(byteBlock[i])));
+    }
 
     for (uint32_t i = 0; i < numCount; ++i)
         lenBlock[i] = binReader.read<int32_t>();
@@ -125,6 +128,27 @@ void PackageParser::tryExtract(const std::filesystem::path& path) {
     }
 }
 
+std::vector<std::string> PackageParser::filenamesWithExtension(const std::string& extension) const {
+    if (extension.empty() || extension.front() != '.')
+        throw std::invalid_argument(fmt::format("{} is incorrect extension. Example of right input is \".bun\"", extension));
+
+    std::vector<std::string> result;
+    for (const auto& it : m_pakIndices) {
+        const PackageIndex& pakIndex = it.second;
+        for (size_t entryId = 0; entryId < pakIndex.entries.size(); ++entryId) {
+            const auto& entry = pakIndex.entries[entryId];
+            if (entry.partialName.ends_with(extension)) {
+                // leading hex2char(entryId) is very importatnt, because it's used for hashing in findFile
+                // TODO: Check finding ane export not only .bun
+                std::string partialName = hex2char(entryId) + entry.partialName;
+                std::replace(partialName.begin(), partialName.end(), '/', '\\');
+                result.push_back(std::move(partialName));
+            }
+        }
+    }
+    return result;
+}
+
 void PackageParser::extract(const PackageIndex& pakIndex, const PackageFileEntry& entry, const std::filesystem::path& outputPath) const {
     std::filesystem::create_directories(outputPath.parent_path());
     std::ofstream out(outputPath.string(), std::ios::binary);
@@ -140,7 +164,8 @@ PackageFileEntry* PackageParser::findFile(PackageIndex& pakIndex, std::string in
     return findFile(pakIndex, innerPath, "", 0);
 }
 
-PackageFileEntry* PackageParser::findFile(PackageIndex& pakIndex, std::string innerPathLeft, std::string innerPathPassed, int offset) const {
+PackageFileEntry*
+PackageParser::findFile(PackageIndex& pakIndex, std::string innerPathLeft, std::string innerPathPassed, int offset) const {
     int num = char2hex(innerPathLeft[0]);
     if (num < 0)
         return nullptr;
@@ -150,7 +175,7 @@ PackageFileEntry* PackageParser::findFile(PackageIndex& pakIndex, std::string in
         return nullptr;
 
     std::string partial = innerPathLeft[0] + pakIndex.entries[num].partialName;
-    if (!innerPathLeft._Starts_with(partial))
+    if (!innerPathLeft.starts_with(partial))
         return nullptr;
 
     innerPathPassed += partial;

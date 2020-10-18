@@ -3,6 +3,7 @@
 #include "BinReader.h"
 
 #include <filesystem>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -36,6 +37,8 @@ public:
 
     PackageParser() = default;
     PackageParser(const std::filesystem::path& path);
+
+    std::vector<std::string> filenamesWithExtension(const std::string& extension) const;
 
     void tryExtract(const std::filesystem::path& innerPath);
 

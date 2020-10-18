@@ -4,7 +4,6 @@ BasedOnStyle: llvm
 AccessModifierOffset: -4
 AllowAllArgumentsOnNextLine: false
 AllowAllConstructorInitializersOnNextLine: false
-AllowAllConstructorInitializersOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: Never
 AllowShortCaseLabelsOnASingleLine: false
@@ -28,6 +27,7 @@ NamespaceIndentation: None
 PointerBindsToType: true
 Standard: Cpp11
 TabWidth: 4
+Standard: Latest
 UseTab: Never
 BreakBeforeBraces: Custom
 BraceWrapping:
